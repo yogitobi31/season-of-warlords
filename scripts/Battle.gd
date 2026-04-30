@@ -1,7 +1,5 @@
 extends Node2D
 
-# 10 vs 10 자동전투를 실행하는 최소 전투 컨트롤러
-
 const UNITS_PER_TEAM := 10
 
 var player_units: Array[Unit] = []
@@ -17,7 +15,10 @@ func create_ui() -> void:
 	result_label = Label.new()
 	result_label.position = Vector2(20, 20)
 	result_label.size = Vector2(1240, 80)
-	result_label.text = "전투 시작! 자동으로 진행됩니다."
+	result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var from_name := GameState.regions.get(GameState.attack_region_id, {}).get("name", "알 수 없는 지역")
+	var to_name := GameState.regions.get(GameState.defense_region_id, {}).get("name", "알 수 없는 지역")
+	result_label.text = "전투: %s → %s\n아군 10명 vs 적군 10명 (자동전투)" % [from_name, to_name]
 	add_child(result_label)
 
 func spawn_teams() -> void:
@@ -38,7 +39,6 @@ func _process(delta: float) -> void:
 	if _battle_finished:
 		return
 
-	# 유효하지 않은 유닛 정리
 	player_units = _filter_alive(player_units)
 	enemy_units = _filter_alive(enemy_units)
 
@@ -65,6 +65,5 @@ func finish_battle(player_won: bool) -> void:
 	else:
 		result_label.text = "패배... 월드맵으로 복귀합니다."
 
-	# 잠깐 결과를 보여준 뒤 월드맵으로 되돌아갑니다.
 	await get_tree().create_timer(1.2).timeout
 	get_tree().change_scene_to_file("res://scenes/WorldMap.tscn")

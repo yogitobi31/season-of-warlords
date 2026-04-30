@@ -1,10 +1,5 @@
 extends Node2D
 
-# 월드맵 MVP 흐름:
-# 1) 플레이어 소유 지역 선택
-# 2) 인접한 적 지역 선택
-# 3) 전투 씬으로 전환
-
 var region_nodes: Dictionary = {}
 var info_label: Label
 
@@ -16,8 +11,9 @@ func _ready() -> void:
 
 func create_ui() -> void:
 	info_label = Label.new()
-	info_label.position = Vector2(20, 20)
-	info_label.size = Vector2(1200, 80)
+	info_label.position = Vector2(20, 700)
+	info_label.size = Vector2(1240, 60)
+	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(info_label)
 
 func spawn_regions() -> void:
@@ -34,6 +30,8 @@ func refresh_regions() -> void:
 	for region_id in region_nodes.keys():
 		var node: RegionNode = region_nodes[region_id]
 		node.update_owner(GameState.get_region_owner(region_id))
+		node.set_selected(false)
+		node.set_attackable(false)
 
 func show_default_message() -> void:
 	var result_text := ""
@@ -44,33 +42,46 @@ func show_default_message() -> void:
 	info_label.text = result_text + "내 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 
 func _on_region_clicked(region_id: String) -> void:
+	print("WorldMap received region click: ", region_id)
 	var region_owner := GameState.get_region_owner(region_id)
 
 	if GameState.selected_region_id == "":
-		# 1단계: 플레이어 소유 지역만 시작점으로 선택 가능
 		if region_owner != GameState.PLAYER_FACTION:
 			info_label.text = "플레이어 소유 지역부터 선택해야 합니다."
 			return
 		GameState.selected_region_id = region_id
-		info_label.text = "%s 선택됨. 인접한 적 지역을 선택하세요." % GameState.regions[region_id]["name"]
+		_update_selection_visuals()
+		info_label.text = "선택된 지역: %s\n인접한 적 지역을 선택하세요." % GameState.regions[region_id]["name"]
 		return
 
-	# 이미 시작 지역을 선택한 경우
 	if region_id == GameState.selected_region_id:
 		GameState.clear_selection()
+		refresh_regions()
 		show_default_message()
 		return
 
-	# 2단계: 인접 체크
 	if not GameState.is_adjacent(GameState.selected_region_id, region_id):
-		info_label.text = "인접하지 않은 지역입니다. 다른 지역을 선택하세요."
+		info_label.text = "인접하지 않은 지역입니다."
 		return
 
-	# 3단계: 적 지역 체크
 	if region_owner == GameState.PLAYER_FACTION:
 		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요."
 		return
 
-	# 전투 진입 정보 설정 후 전투 씬 전환
 	GameState.set_battle_context(GameState.selected_region_id, region_id)
+	print("Starting battle from ", GameState.selected_region_id, " to ", region_id)
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+func _update_selection_visuals() -> void:
+	refresh_regions()
+	var selected_id := GameState.selected_region_id
+	if selected_id == "" or not region_nodes.has(selected_id):
+		return
+	var selected_node: RegionNode = region_nodes[selected_id]
+	selected_node.set_selected(true)
+
+	for neighbor_id in GameState.regions[selected_id]["adjacent"]:
+		var owner := GameState.get_region_owner(neighbor_id)
+		if owner != GameState.PLAYER_FACTION and region_nodes.has(neighbor_id):
+			var neighbor_node: RegionNode = region_nodes[neighbor_id]
+			neighbor_node.set_attackable(true)
