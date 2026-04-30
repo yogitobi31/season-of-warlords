@@ -44,6 +44,7 @@ func show_default_message() -> void:
 	info_label.text = result_text + "내 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 
 func _on_region_clicked(region_id: String) -> void:
+	print("WorldMap received region click: ", region_id)
 	var region_owner := GameState.get_region_owner(region_id)
 
 	if GameState.selected_region_id == "":
@@ -73,4 +74,5 @@ func _on_region_clicked(region_id: String) -> void:
 
 	# 전투 진입 정보 설정 후 전투 씬 전환
 	GameState.set_battle_context(GameState.selected_region_id, region_id)
+	print("Starting battle from ", GameState.selected_region_id, " to ", region_id)
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")

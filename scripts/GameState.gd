@@ -5,9 +5,9 @@ extends Node
 
 const PLAYER_FACTION := 0
 const FACTION_NAMES := {
-	0: "Player",
-	1: "Wei",
-	2: "Wu"
+	0: "Bluevale Kingdom",
+	1: "Crimson Duchy",
+	2: "Verdant Marches"
 }
 
 # 각 세력의 기본 색상입니다. (월드맵/지역 노드 표시용)
