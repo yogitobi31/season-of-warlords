@@ -1,43 +1,40 @@
 extends Node
 
-# 전역 게임 상태를 보관하는 오토로드 싱글톤입니다.
-# 월드맵/전투 씬 모두 이 데이터를 공유합니다.
-
 const PLAYER_FACTION := 0
+const RED_KINGDOM_FACTION := 1
+const GREEN_KINGDOM_FACTION := 2
+const NEUTRAL_FACTION := 3
+
 const FACTION_NAMES := {
-	0: "Player",
-	1: "Wei",
-	2: "Wu"
+	PLAYER_FACTION: "Player",
+	RED_KINGDOM_FACTION: "Red Kingdom",
+	GREEN_KINGDOM_FACTION: "Green Kingdom",
+	NEUTRAL_FACTION: "Neutral"
 }
 
-# 각 세력의 기본 색상입니다. (월드맵/지역 노드 표시용)
 const FACTION_COLORS := {
-	0: Color("4caf50"),
-	1: Color("f44336"),
-	2: Color("2196f3")
+	PLAYER_FACTION: Color("3b82f6"),
+	RED_KINGDOM_FACTION: Color("ef4444"),
+	GREEN_KINGDOM_FACTION: Color("22c55e"),
+	NEUTRAL_FACTION: Color("9ca3af")
 }
 
-# 지역 원본 데이터 (인접 정보 포함)
 var regions: Dictionary = {}
-# 현재 지역 소유권 (region_id -> faction_id)
 var ownership: Dictionary = {}
 
-# 월드맵 선택 상태
 var selected_region_id: String = ""
 var attack_region_id: String = ""
 var defense_region_id: String = ""
 var last_battle_result: String = ""
 
 func _ready() -> void:
-	# 게임 시작 시 지역 데이터를 초기화합니다.
 	initialize_regions()
 
 func initialize_regions() -> void:
-	# RegionData가 가진 정적 데이터를 복사하여 런타임 상태를 만듭니다.
 	regions = RegionData.get_regions()
 	ownership.clear()
 	for region_id in regions.keys():
-		ownership[region_id] = regions[region_id]["owner"]
+		ownership[region_id] = regions[region_id]["owner_faction"]
 	clear_selection()
 	last_battle_result = ""
 
@@ -56,7 +53,7 @@ func set_region_owner(region_id: String, faction_id: int) -> void:
 func is_adjacent(from_region_id: String, to_region_id: String) -> bool:
 	if not regions.has(from_region_id):
 		return false
-	var neighbors: Array = regions[from_region_id].get("adjacent", [])
+	var neighbors: Array = regions[from_region_id].get("neighbors", [])
 	return to_region_id in neighbors
 
 func set_battle_context(attacker_region_id: String, defender_region_id: String) -> void:
@@ -64,7 +61,6 @@ func set_battle_context(attacker_region_id: String, defender_region_id: String) 
 	defense_region_id = defender_region_id
 
 func apply_battle_result(player_won: bool) -> void:
-	# 플레이어 승리 시 방어 지역 소유권이 플레이어로 변경됩니다.
 	if player_won and defense_region_id != "":
 		set_region_owner(defense_region_id, PLAYER_FACTION)
 		last_battle_result = "player_win"
