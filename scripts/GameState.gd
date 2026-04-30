@@ -6,15 +6,17 @@ extends Node
 const PLAYER_FACTION := 0
 const FACTION_NAMES := {
 	0: "Player",
-	1: "Wei",
-	2: "Wu"
+	1: "Red Kingdom",
+	2: "Green Kingdom",
+	3: "Neutral"
 }
 
 # 각 세력의 기본 색상입니다. (월드맵/지역 노드 표시용)
 const FACTION_COLORS := {
-	0: Color("4caf50"),
-	1: Color("f44336"),
-	2: Color("2196f3")
+	0: Color("3b82f6"),
+	1: Color("ef4444"),
+	2: Color("22c55e"),
+	3: Color("9ca3af")
 }
 
 # 지역 원본 데이터 (인접 정보 포함)

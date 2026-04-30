@@ -1,76 +1,86 @@
 extends Node2D
 
-# 월드맵 MVP 흐름:
-# 1) 플레이어 소유 지역 선택
-# 2) 인접한 적 지역 선택
-# 3) 전투 씬으로 전환
+const BATTLE_SCENE_PATH := "res://scenes/Battle.tscn"
 
-var region_nodes: Dictionary = {}
-var info_label: Label
+@onready var status_label: Label = $CanvasLayer/UIRoot/StatusLabel
+@onready var message_label: Label = $CanvasLayer/UIRoot/MessageLabel
+@onready var region_container: Control = $CanvasLayer/UIRoot/RegionContainer
+
+var region_buttons: Dictionary = {}
 
 func _ready() -> void:
-	create_ui()
-	spawn_regions()
-	refresh_regions()
+	print("WorldMap ready - regions initialized")
+	_prepare_map_data()
+	_bind_region_buttons()
+	_refresh_region_buttons()
 	show_default_message()
 
-func create_ui() -> void:
-	info_label = Label.new()
-	info_label.position = Vector2(20, 20)
-	info_label.size = Vector2(1200, 80)
-	add_child(info_label)
+func _prepare_map_data() -> void:
+	if GameState.regions.is_empty():
+		GameState.initialize_regions()
+	for id in ["r1", "r2", "r3", "r4", "r5", "r6"]:
+		if GameState.regions.has(id):
+			GameState.regions[id]["name"] = _display_name(id)
 
-func spawn_regions() -> void:
-	for region_id in GameState.regions.keys():
-		var data: Dictionary = GameState.regions[region_id]
-		var node := RegionNode.new()
-		node.position = data["pos"]
-		node.setup(region_id, data["name"], GameState.get_region_owner(region_id), data["adjacent"])
-		node.region_clicked.connect(_on_region_clicked)
-		add_child(node)
-		region_nodes[region_id] = node
+func _bind_region_buttons() -> void:
+	for child in region_container.get_children():
+		if child is Button:
+			var region_id := child.name
+			region_buttons[region_id] = child
+			(child as Button).pressed.connect(func() -> void:
+				_on_region_clicked(region_id)
+			)
 
-func refresh_regions() -> void:
-	for region_id in region_nodes.keys():
-		var node: RegionNode = region_nodes[region_id]
-		node.update_owner(GameState.get_region_owner(region_id))
+func _display_name(region_id: String) -> String:
+	match region_id:
+		"r1": return "수도"
+		"r2": return "북부성"
+		"r3": return "동부평야"
+		"r4": return "서부관문"
+		"r5": return "남부항구"
+		"r6": return "중앙산맥"
+		_: return region_id
+
+func _refresh_region_buttons() -> void:
+	for region_id in region_buttons.keys():
+		var button: Button = region_buttons[region_id]
+		var owner := GameState.get_region_owner(region_id)
+		button.modulate = GameState.FACTION_COLORS.get(owner, Color.DIM_GRAY)
+		button.text = "%s\n소유: %s" % [_display_name(region_id), GameState.FACTION_NAMES.get(owner, "Neutral")]
 
 func show_default_message() -> void:
-	var result_text := ""
+	status_label.text = "선택 상태: 없음"
 	if GameState.last_battle_result == "player_win":
-		result_text = "직전 전투 결과: 승리! 지역을 점령했습니다.\n"
+		message_label.text = "직전 전투 결과: 승리. 공격할 지역을 고르세요."
 	elif GameState.last_battle_result == "player_lose":
-		result_text = "직전 전투 결과: 패배...\n"
-	info_label.text = result_text + "내 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
+		message_label.text = "직전 전투 결과: 패배. 다시 공격할 지역을 고르세요."
+	else:
+		message_label.text = "내 지역을 먼저 선택하세요."
 
 func _on_region_clicked(region_id: String) -> void:
 	var owner := GameState.get_region_owner(region_id)
 
 	if GameState.selected_region_id == "":
-		# 1단계: 플레이어 소유 지역만 시작점으로 선택 가능
 		if owner != GameState.PLAYER_FACTION:
-			info_label.text = "플레이어 소유 지역부터 선택해야 합니다."
+			message_label.text = "먼저 아군 지역을 선택하세요"
 			return
 		GameState.selected_region_id = region_id
-		info_label.text = "%s 선택됨. 인접한 적 지역을 선택하세요." % GameState.regions[region_id]["name"]
+		status_label.text = "선택 상태: %s" % _display_name(region_id)
+		message_label.text = "인접한 적 지역을 선택하세요."
 		return
 
-	# 이미 시작 지역을 선택한 경우
 	if region_id == GameState.selected_region_id:
 		GameState.clear_selection()
 		show_default_message()
 		return
 
-	# 2단계: 인접 체크
 	if not GameState.is_adjacent(GameState.selected_region_id, region_id):
-		info_label.text = "인접하지 않은 지역입니다. 다른 지역을 선택하세요."
+		message_label.text = "인접 지역이 아닙니다"
 		return
 
-	# 3단계: 적 지역 체크
 	if owner == GameState.PLAYER_FACTION:
-		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요."
+		message_label.text = "아군 지역입니다. 적 지역을 선택하세요."
 		return
 
-	# 전투 진입 정보 설정 후 전투 씬 전환
 	GameState.set_battle_context(GameState.selected_region_id, region_id)
-	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+	get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
