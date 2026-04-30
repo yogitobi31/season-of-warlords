@@ -30,3 +30,18 @@ Godot 4.x + GDScript로 만드는 인디 전략 RPG 프로토타입입니다.
 - 간단한 턴/시간 진행(예: 1회 공격 후 턴 종료)
 - AI 세력의 반격/확장 로직
 - 저장/불러오기
+
+## WorldMap/RegionNode 오류 수정 (Godot 4.6.2)
+- 오류 원인
+  - `WorldMap.gd`에서 로컬 변수명 `owner`가 `Node.owner` 기본 프로퍼티와 이름이 겹쳐 경고가 발생했습니다.
+  - `RegionNode.gd`의 `adjacent_regions`가 `Array[String]`인데, `setup()`에서 일반 `Array`를 직접 대입해 타입 오류가 발생했습니다.
+- 수정 방법
+  - `WorldMap.gd`의 클릭 처리 로컬 변수명을 `owner_faction`으로 변경했습니다.
+  - `RegionNode.gd`의 `setup()`에서 이웃 배열을 순회하며 `str()`로 변환해 `Array[String]`에 `append()`하도록 변경했습니다.
+  - 디버그 로그를 추가했습니다: `WorldMap ready`, `Spawning regions`, `Region created: ...`, `Region setup complete: ...`.
+- Godot 4.6.2 실행 확인 절차
+  1. Godot 4.6.2로 프로젝트를 엽니다.
+  2. 메인 씬이 `scenes/WorldMap.tscn`인지 확인하고 실행(F5)합니다.
+  3. Output 패널에서 디버그 로그가 순서대로 출력되는지 확인합니다.
+  4. 최소 6개 이상의 지역 노드가 표시되고, 지역명/세력 색상이 보이는지 확인합니다.
+  5. 지역을 클릭했을 때 선택/안내 문구가 정상 반응하는지 확인합니다.
