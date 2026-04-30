@@ -4,3 +4,92 @@
 
 [node name="WorldMap" type="Node2D"]
 script = ExtResource("1")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="UIRoot" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/UIRoot"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 16.0
+offset_right = 524.0
+offset_bottom = 52.0
+text = "Season of Warlords - World Map"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/UIRoot"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 56.0
+offset_right = 880.0
+offset_bottom = 88.0
+text = "선택 상태: 없음"
+
+[node name="MessageLabel" type="Label" parent="CanvasLayer/UIRoot"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 88.0
+offset_right = 1100.0
+offset_bottom = 124.0
+text = "내 지역을 먼저 선택하세요."
+
+[node name="RegionContainer" type="Control" parent="CanvasLayer/UIRoot"]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 140.0
+offset_right = 1200.0
+offset_bottom = 680.0
+
+[node name="r1" type="Button" parent="CanvasLayer/UIRoot/RegionContainer"]
+layout_mode = 0
+offset_left = 120.0
+offset_top = 90.0
+offset_right = 280.0
+offset_bottom = 170.0
+text = "수도"
+
+[node name="r2" type="Button" parent="CanvasLayer/UIRoot/RegionContainer"]
+layout_mode = 0
+offset_left = 370.0
+offset_top = 70.0
+offset_right = 530.0
+offset_bottom = 150.0
+text = "북부성"
+
+[node name="r3" type="Button" parent="CanvasLayer/UIRoot/RegionContainer"]
+layout_mode = 0
+offset_left = 640.0
+offset_top = 120.0
+offset_right = 800.0
+offset_bottom = 200.0
+text = "동부평야"
+
+[node name="r4" type="Button" parent="CanvasLayer/UIRoot/RegionContainer"]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 290.0
+offset_right = 250.0
+offset_bottom = 370.0
+text = "서부관문"
+
+[node name="r5" type="Button" parent="CanvasLayer/UIRoot/RegionContainer"]
+layout_mode = 0
+offset_left = 360.0
+offset_top = 300.0
+offset_right = 520.0
+offset_bottom = 380.0
+text = "남부항구"
+
+[node name="r6" type="Button" parent="CanvasLayer/UIRoot/RegionContainer"]
+layout_mode = 0
+offset_left = 620.0
+offset_top = 300.0
+offset_right = 780.0
+offset_bottom = 380.0
+text = "중앙산맥"
