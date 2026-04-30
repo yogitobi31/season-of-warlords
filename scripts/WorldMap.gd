@@ -43,10 +43,8 @@ func refresh_regions() -> void:
 
 func show_default_message() -> void:
 	var result_text := ""
-	if GameState.last_battle_result == "player_win":
-		result_text = "직전 전투 결과: 승리! 지역을 점령했습니다.\n"
-	elif GameState.last_battle_result == "player_lose":
-		result_text = "직전 전투 결과: 패배...\n"
+	if GameState.last_battle_message != "":
+		result_text = "직전 전투 결과: %s\n" % GameState.last_battle_message
 	info_label.text = result_text + "청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 
 func _on_region_clicked(region_id: String) -> void:
