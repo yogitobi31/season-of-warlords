@@ -9,6 +9,7 @@ var region_nodes: Dictionary = {}
 var info_label: Label
 
 func _ready() -> void:
+	print("WorldMap ready")
 	create_ui()
 	spawn_regions()
 	refresh_regions()
@@ -21,14 +22,17 @@ func create_ui() -> void:
 	add_child(info_label)
 
 func spawn_regions() -> void:
+	print("Spawning regions")
 	for region_id in GameState.regions.keys():
 		var data: Dictionary = GameState.regions[region_id]
 		var node := RegionNode.new()
 		node.position = data["pos"]
-		node.setup(region_id, data["name"], GameState.get_region_owner(region_id), data["adjacent"])
+		var neighbors: Array = data.get("adjacent", [])
+		node.setup(str(region_id), str(data["name"]), GameState.get_region_owner(region_id), neighbors)
 		node.region_clicked.connect(_on_region_clicked)
 		add_child(node)
 		region_nodes[region_id] = node
+		print("Region created: %s" % str(data["name"]))
 
 func refresh_regions() -> void:
 	for region_id in region_nodes.keys():
@@ -44,11 +48,11 @@ func show_default_message() -> void:
 	info_label.text = result_text + "내 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 
 func _on_region_clicked(region_id: String) -> void:
-	var owner := GameState.get_region_owner(region_id)
+	var owner_faction := GameState.get_region_owner(region_id)
 
 	if GameState.selected_region_id == "":
 		# 1단계: 플레이어 소유 지역만 시작점으로 선택 가능
-		if owner != GameState.PLAYER_FACTION:
+		if owner_faction != GameState.PLAYER_FACTION:
 			info_label.text = "플레이어 소유 지역부터 선택해야 합니다."
 			return
 		GameState.selected_region_id = region_id
@@ -67,7 +71,7 @@ func _on_region_clicked(region_id: String) -> void:
 		return
 
 	# 3단계: 적 지역 체크
-	if owner == GameState.PLAYER_FACTION:
+	if owner_faction == GameState.PLAYER_FACTION:
 		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요."
 		return
 
