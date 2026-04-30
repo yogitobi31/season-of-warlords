@@ -5,16 +5,16 @@ extends Node
 
 const PLAYER_FACTION := 0
 const FACTION_NAMES := {
-	0: "Player",
-	1: "Wei",
-	2: "Wu"
+	0: "청람 왕국",
+	1: "진홍 공국",
+	2: "녹림 변경백령"
 }
 
 # 각 세력의 기본 색상입니다. (월드맵/지역 노드 표시용)
 const FACTION_COLORS := {
-	0: Color("4caf50"),
-	1: Color("f44336"),
-	2: Color("2196f3")
+	0: Color("3f7cff"),
+	1: Color("d84a4a"),
+	2: Color("4caf50")
 }
 
 # 지역 원본 데이터 (인접 정보 포함)
