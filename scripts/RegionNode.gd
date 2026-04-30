@@ -6,7 +6,7 @@ signal region_clicked(region_id: String)
 @export var region_id: String = ""
 @export var region_name: String = ""
 @export var owner_faction: int = 0
-@export var adjacent_regions: Array[String] = []
+@export var adjacent_regions: Array = []
 
 var _shape_node: ColorRect
 var _name_label: Label
@@ -39,7 +39,11 @@ func setup(id: String, display_name: String, faction_id: int, neighbors: Array) 
 	region_id = id
 	region_name = display_name
 	owner_faction = faction_id
-	adjacent_regions = neighbors
+
+	adjacent_regions.clear()
+	for neighbor in neighbors:
+		adjacent_regions.append(str(neighbor))
+
 	if is_inside_tree():
 		update_visual()
 
