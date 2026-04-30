@@ -14,10 +14,19 @@ func _ready() -> void:
 	spawn_teams()
 
 func create_ui() -> void:
+	var background := ColorRect.new()
+	background.position = Vector2(0, 0)
+	background.size = Vector2(1280, 720)
+	background.color = Color("1f1f2f")
+	add_child(background)
+
 	result_label = Label.new()
 	result_label.position = Vector2(20, 20)
 	result_label.size = Vector2(1240, 80)
-	result_label.text = "전투 시작! 자동으로 진행됩니다."
+
+	var attack_name := GameState.regions.get(GameState.attack_region_id, {}).get("name", "알 수 없는 지역")
+	var defense_name := GameState.regions.get(GameState.defense_region_id, {}).get("name", "알 수 없는 지역")
+	result_label.text = "전투: %s → %s\n자동전투 진행 중..." % [attack_name, defense_name]
 	add_child(result_label)
 
 func spawn_teams() -> void:
