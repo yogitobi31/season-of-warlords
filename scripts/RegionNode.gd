@@ -35,13 +35,25 @@ func _ready() -> void:
 
 	update_visual()
 
-func setup(id: String, display_name: String, faction_id: int, neighbors: Array) -> void:
-	region_id = id
-	region_name = display_name
-	owner_faction = faction_id
-	adjacent_regions = neighbors
+func setup(
+	new_region_id: String,
+	new_region_name: String,
+	new_owner_faction: int,
+	new_position: Vector2,
+	region_neighbors: Array
+) -> void:
+	region_id = new_region_id
+	region_name = new_region_name
+	owner_faction = new_owner_faction
+	position = new_position
+
+	adjacent_regions.clear()
+	for neighbor in region_neighbors:
+		adjacent_regions.append(str(neighbor))
+
 	if is_inside_tree():
 		update_visual()
+	print("Region setup complete: ", region_name)
 
 func update_owner(faction_id: int) -> void:
 	owner_faction = faction_id
