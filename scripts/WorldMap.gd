@@ -44,11 +44,11 @@ func show_default_message() -> void:
 	info_label.text = result_text + "내 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 
 func _on_region_clicked(region_id: String) -> void:
-	var owner := GameState.get_region_owner(region_id)
+	var region_owner := GameState.get_region_owner(region_id)
 
 	if GameState.selected_region_id == "":
 		# 1단계: 플레이어 소유 지역만 시작점으로 선택 가능
-		if owner != GameState.PLAYER_FACTION:
+		if region_owner != GameState.PLAYER_FACTION:
 			info_label.text = "플레이어 소유 지역부터 선택해야 합니다."
 			return
 		GameState.selected_region_id = region_id
@@ -67,7 +67,7 @@ func _on_region_clicked(region_id: String) -> void:
 		return
 
 	# 3단계: 적 지역 체크
-	if owner == GameState.PLAYER_FACTION:
+	if region_owner == GameState.PLAYER_FACTION:
 		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요."
 		return
 
