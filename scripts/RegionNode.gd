@@ -17,6 +17,7 @@ func _ready() -> void:
 	_shape_node = ColorRect.new()
 	_shape_node.size = Vector2(120, 64)
 	_shape_node.position = Vector2(-60, -32)
+	_shape_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_shape_node)
 
 	_name_label = Label.new()
@@ -24,6 +25,7 @@ func _ready() -> void:
 	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_name_label.size = Vector2(120, 64)
 	_name_label.position = Vector2(-60, -32)
+	_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_name_label)
 
 	# 클릭 판정 영역을 설정합니다.
@@ -59,4 +61,5 @@ func update_visual() -> void:
 
 func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		print("Region clicked: ", region_id)
 		emit_signal("region_clicked", region_id)
