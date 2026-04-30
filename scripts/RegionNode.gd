@@ -1,4 +1,4 @@
-extends Area2D
+extends Button
 class_name RegionNode
 
 signal region_clicked(region_id: String)
@@ -8,31 +8,20 @@ signal region_clicked(region_id: String)
 @export var owner_faction: int = 0
 @export var adjacent_regions: Array = []
 
-var _shape_node: ColorRect
-var _name_label: Label
+const REGION_SIZE := Vector2(160, 76)
+
+var is_selected: bool = false
+var is_attackable: bool = false
 
 func _ready() -> void:
-	input_pickable = true
-	# 단순 사각형으로 지역을 표현합니다.
-	_shape_node = ColorRect.new()
-	_shape_node.size = Vector2(120, 64)
-	_shape_node.position = Vector2(-60, -32)
-	add_child(_shape_node)
-
-	_name_label = Label.new()
-	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_name_label.size = Vector2(120, 64)
-	_name_label.position = Vector2(-60, -32)
-	add_child(_name_label)
-
-	# 클릭 판정 영역을 설정합니다.
-	var collision := CollisionShape2D.new()
-	var rect_shape := RectangleShape2D.new()
-	rect_shape.size = Vector2(120, 64)
-	collision.shape = rect_shape
-	add_child(collision)
-
+	# MVP 단계에서는 Area2D보다 Button이 클릭 동작을 확인하기 훨씬 쉽습니다.
+	# Godot 4.6에서 pressed 신호를 사용해 확실하게 클릭 이벤트를 받습니다.
+	custom_minimum_size = REGION_SIZE
+	size = REGION_SIZE
+	focus_mode = Control.FOCUS_NONE
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	if not pressed.is_connected(_on_pressed):
+		pressed.connect(_on_pressed)
 	update_visual()
 
 func setup(id: String, display_name: String, faction_id: int, neighbors: Array) -> void:
@@ -44,19 +33,72 @@ func setup(id: String, display_name: String, faction_id: int, neighbors: Array) 
 	for neighbor in neighbors:
 		adjacent_regions.append(str(neighbor))
 
-	if is_inside_tree():
-		update_visual()
+	update_visual()
 
 func update_owner(faction_id: int) -> void:
 	owner_faction = faction_id
 	update_visual()
 
-func update_visual() -> void:
-	if _shape_node == null or _name_label == null:
-		return
-	_shape_node.color = GameState.FACTION_COLORS.get(owner_faction, Color.DIM_GRAY)
-	_name_label.text = "%s\n(%s)" % [region_name, GameState.FACTION_NAMES.get(owner_faction, "Unknown")]
+func set_selected(value: bool) -> void:
+	is_selected = value
+	update_visual()
 
-func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		emit_signal("region_clicked", region_id)
+func set_attackable(value: bool) -> void:
+	is_attackable = value
+	update_visual()
+
+func update_visual() -> void:
+	custom_minimum_size = REGION_SIZE
+	size = REGION_SIZE
+
+	var faction_name := "Unknown"
+	if Engine.has_singleton("GameState"):
+		faction_name = GameState.FACTION_NAMES.get(owner_faction, "Unknown")
+	elif typeof(GameState) != TYPE_NIL:
+		faction_name = GameState.FACTION_NAMES.get(owner_faction, "Unknown")
+
+	var marker := ""
+	if is_selected:
+		marker = "★ "
+	elif is_attackable:
+		marker = "⚔ "
+
+	text = "%s%s\n%s" % [marker, region_name, faction_name]
+
+	var base_color: Color = Color.DIM_GRAY
+	if typeof(GameState) != TYPE_NIL:
+		base_color = GameState.FACTION_COLORS.get(owner_faction, Color.DIM_GRAY)
+
+	var border_color: Color = Color(0.08, 0.08, 0.08)
+	var border_width := 2
+	if is_selected:
+		border_color = Color(1.0, 0.95, 0.1)
+		border_width = 6
+	elif is_attackable:
+		border_color = Color(1.0, 0.65, 0.0)
+		border_width = 5
+
+	var normal_style := StyleBoxFlat.new()
+	normal_style.bg_color = base_color
+	normal_style.border_color = border_color
+	normal_style.set_border_width_all(border_width)
+	normal_style.set_corner_radius_all(10)
+
+	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	hover_style.bg_color = base_color.lightened(0.18)
+
+	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	pressed_style.bg_color = base_color.darkened(0.18)
+
+	add_theme_stylebox_override("normal", normal_style)
+	add_theme_stylebox_override("hover", hover_style)
+	add_theme_stylebox_override("pressed", pressed_style)
+	add_theme_stylebox_override("focus", normal_style)
+	add_theme_color_override("font_color", Color.WHITE)
+	add_theme_color_override("font_hover_color", Color.WHITE)
+	add_theme_color_override("font_pressed_color", Color.WHITE)
+	add_theme_color_override("font_focus_color", Color.WHITE)
+
+func _on_pressed() -> void:
+	print("Region clicked: ", region_id, " / ", region_name)
+	emit_signal("region_clicked", region_id)
