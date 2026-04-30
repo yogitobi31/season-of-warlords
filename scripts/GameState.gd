@@ -27,6 +27,7 @@ var selected_region_id: String = ""
 var attack_region_id: String = ""
 var defense_region_id: String = ""
 var last_battle_result: String = ""
+var last_battle_message: String = ""
 
 func _ready() -> void:
 	# 게임 시작 시 지역 데이터를 초기화합니다.
@@ -40,6 +41,7 @@ func initialize_regions() -> void:
 		ownership[region_id] = regions[region_id]["owner"]
 	clear_selection()
 	last_battle_result = ""
+	last_battle_message = ""
 
 func clear_selection() -> void:
 	selected_region_id = ""
@@ -53,6 +55,14 @@ func set_region_owner(region_id: String, faction_id: int) -> void:
 	if ownership.has(region_id):
 		ownership[region_id] = faction_id
 
+func get_region_name(region_id: String) -> String:
+	if regions.has(region_id):
+		return str(regions[region_id].get("name", region_id))
+	return region_id
+
+func get_faction_name(faction_id: int) -> String:
+	return str(FACTION_NAMES.get(faction_id, "Unknown"))
+
 func is_adjacent(from_region_id: String, to_region_id: String) -> bool:
 	if not regions.has(from_region_id):
 		return false
@@ -63,11 +73,22 @@ func set_battle_context(attacker_region_id: String, defender_region_id: String) 
 	attack_region_id = attacker_region_id
 	defense_region_id = defender_region_id
 
+func get_battle_title() -> String:
+	if attack_region_id == "" or defense_region_id == "":
+		return "전투"
+	return "전투: %s → %s" % [get_region_name(attack_region_id), get_region_name(defense_region_id)]
+
 func apply_battle_result(player_won: bool) -> void:
+	var attacked_region_name := get_region_name(defense_region_id)
+	var retreat_region_name := get_region_name(attack_region_id)
+
 	# 플레이어 승리 시 방어 지역 소유권이 플레이어로 변경됩니다.
 	if player_won and defense_region_id != "":
 		set_region_owner(defense_region_id, PLAYER_FACTION)
 		last_battle_result = "player_win"
+		last_battle_message = "승리! %s를 점령했습니다." % attacked_region_name
 	else:
 		last_battle_result = "player_lose"
+		last_battle_message = "패배... %s로 후퇴합니다." % retreat_region_name
+
 	clear_selection()
