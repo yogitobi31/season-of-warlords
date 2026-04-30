@@ -1,4 +1,4 @@
-extends Area2D
+extends Button
 class_name RegionNode
 
 signal region_clicked(region_id: String)
@@ -8,31 +8,15 @@ signal region_clicked(region_id: String)
 @export var owner_faction: int = 0
 @export var adjacent_regions: Array = []
 
-var _shape_node: ColorRect
-var _name_label: Label
+var _base_style: StyleBoxFlat
 
 func _ready() -> void:
-	input_pickable = true
-	# 단순 사각형으로 지역을 표현합니다.
-	_shape_node = ColorRect.new()
-	_shape_node.size = Vector2(120, 64)
-	_shape_node.position = Vector2(-60, -32)
-	add_child(_shape_node)
-
-	_name_label = Label.new()
-	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_name_label.size = Vector2(120, 64)
-	_name_label.position = Vector2(-60, -32)
-	add_child(_name_label)
-
-	# 클릭 판정 영역을 설정합니다.
-	var collision := CollisionShape2D.new()
-	var rect_shape := RectangleShape2D.new()
-	rect_shape.size = Vector2(120, 64)
-	collision.shape = rect_shape
-	add_child(collision)
-
+	custom_minimum_size = Vector2(140, 60)
+	size = Vector2(140, 60)
+	focus_mode = Control.FOCUS_NONE
+	autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pressed.connect(_on_pressed)
+	_build_base_style()
 	update_visual()
 
 func setup(id: String, display_name: String, faction_id: int, neighbors: Array) -> void:
@@ -52,11 +36,50 @@ func update_owner(faction_id: int) -> void:
 	update_visual()
 
 func update_visual() -> void:
-	if _shape_node == null or _name_label == null:
-		return
-	_shape_node.color = GameState.FACTION_COLORS.get(owner_faction, Color.DIM_GRAY)
-	_name_label.text = "%s\n(%s)" % [region_name, GameState.FACTION_NAMES.get(owner_faction, "Unknown")]
+	if _base_style == null:
+		_build_base_style()
+	_base_style.bg_color = GameState.FACTION_COLORS.get(owner_faction, Color.DIM_GRAY)
+	text = "%s\n(%s)" % [region_name, GameState.FACTION_NAMES.get(owner_faction, "Unknown")]
+	add_theme_stylebox_override("normal", _base_style)
+	add_theme_stylebox_override("hover", _base_style)
+	add_theme_stylebox_override("pressed", _base_style)
 
-func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		emit_signal("region_clicked", region_id)
+func set_selected(selected: bool) -> void:
+	if selected:
+		var selected_style := _base_style.duplicate() as StyleBoxFlat
+		selected_style.border_width_left = 4
+		selected_style.border_width_top = 4
+		selected_style.border_width_right = 4
+		selected_style.border_width_bottom = 4
+		selected_style.border_color = Color.YELLOW
+		add_theme_stylebox_override("normal", selected_style)
+		add_theme_stylebox_override("hover", selected_style)
+		add_theme_stylebox_override("pressed", selected_style)
+	else:
+		update_visual()
+
+func set_attackable(attackable: bool) -> void:
+	if attackable:
+		var attack_style := _base_style.duplicate() as StyleBoxFlat
+		attack_style.border_width_left = 3
+		attack_style.border_width_top = 3
+		attack_style.border_width_right = 3
+		attack_style.border_width_bottom = 3
+		attack_style.border_color = Color(1.0, 0.85, 0.2)
+		add_theme_stylebox_override("normal", attack_style)
+		add_theme_stylebox_override("hover", attack_style)
+		add_theme_stylebox_override("pressed", attack_style)
+	else:
+		update_visual()
+
+func _build_base_style() -> void:
+	_base_style = StyleBoxFlat.new()
+	_base_style.bg_color = Color.DIM_GRAY
+	_base_style.corner_radius_top_left = 8
+	_base_style.corner_radius_top_right = 8
+	_base_style.corner_radius_bottom_right = 8
+	_base_style.corner_radius_bottom_left = 8
+
+func _on_pressed() -> void:
+	print("Region clicked: ", region_id)
+	emit_signal("region_clicked", region_id)
