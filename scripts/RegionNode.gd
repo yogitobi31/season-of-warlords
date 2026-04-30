@@ -35,11 +35,13 @@ func _ready() -> void:
 
 	update_visual()
 
-func setup(id: String, display_name: String, faction_id: int, neighbors: Array) -> void:
+func setup(id: String, display_name: String, faction_id: int, region_neighbors: Array) -> void:
 	region_id = id
 	region_name = display_name
 	owner_faction = faction_id
-	adjacent_regions = neighbors
+	adjacent_regions.clear()
+	for neighbor in region_neighbors:
+		adjacent_regions.append(str(neighbor))
 	if is_inside_tree():
 		update_visual()
 
