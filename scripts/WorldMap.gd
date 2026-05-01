@@ -452,7 +452,13 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 	lines.append("[지역 정보]")
 	lines.append("지역: %s" % GameState.get_region_name(region_id))
 	lines.append("세력: %s" % GameState.FACTION_NAMES.get(GameState.get_region_owner(region_id), "미상"))
-	lines.append("이벤트 상태: %s" % ("해결" if GameState.is_region_event_resolved(region_id) else "미해결"))
+	var event_id: String = GameState.get_region_event_id(region_id)
+	if event_id == "":
+		lines.append("이벤트 상태: 없음")
+	elif GameState.is_region_event_resolved(region_id):
+		lines.append("이벤트 상태: 해결")
+	else:
+		lines.append("이벤트 상태: 미해결")
 	lines.append("위험도: %s" % str(region_data.get("danger", "보통")))
 	lines.append("")
 	lines.append("[가능 행동]")
@@ -509,12 +515,16 @@ func _update_event_action_button(region_id: String) -> void:
 	var action_type: String = GameState.get_region_action_type(region_id)
 	event_action_button.visible = true
 	event_action_button.disabled = false
-	event_action_button.text = "조사/탐사 시작" if action_type == "exploration" else "이벤트 진행"
+	event_action_button.text = _get_action_start_text(action_type)
 	event_action_button.set_meta("region_id", region_id)
 
 func _on_event_action_button_pressed() -> void:
 	var selected_id: String = str(event_action_button.get_meta("region_id", ""))
 	_start_region_action(selected_id)
+
+func _get_action_start_text(action_type: String) -> String:
+	var mapping: Dictionary = {"conquest": "출정", "exploration": "조사 시작", "rescue": "구조하러 가기", "defense": "방어 준비", "escort": "호위 시작", "ambush": "진입", "choice": "상황 확인", "training": "훈련하기", "resource": "자원 회수", "ritual": "의식 저지"}
+	return str(mapping.get(action_type, "이벤트 진행"))
 
 func _get_action_type_display(action_type: String) -> String:
 	var mapping: Dictionary = {"conquest": "점령", "exploration": "조사", "ambush": "매복", "choice": "선택", "training": "훈련", "resource": "자원", "defense": "방어", "rescue": "구출", "escort": "호위", "ritual": "의식"}
