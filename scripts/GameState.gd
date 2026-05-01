@@ -186,6 +186,22 @@ func initialize_story_events() -> void:
 			"choices": ["우리는 숲과 사람을 함께 지킬 것이다.", "청람의 깃발은 버려진 이들을 위해 다시 선다."],
 			"recruit_companion_id": "elin",
 			"completed": false
+
+		},
+		"recruit_mira": {
+			"id": "recruit_mira",
+			"region_id": "r7",
+			"title": "고대 유적지의 견습 마법사",
+			"speaker_name": "미라",
+			"dialogue_lines": [
+				"멈춰요! 그 마법진은 아직 안정되지 않았어요!",
+				"진홍 공국도 녹림 변경백령도 이 유적의 힘을 병기로 쓰려고 했어요.",
+				"저는… 아직 견습에 불과하지만, 이 마법서가 잘못된 손에 들어가는 건 막고 싶어요.",
+				"청람 성채가 정말 사람을 지키기 위해 싸운다면, 제 마법도 그곳에서 의미를 찾을 수 있을까요?"
+			],
+			"choices": ["힘은 지배가 아니라 지키기 위해 쓰여야 한다.", "청람 성채에서 네 마법을 사람들을 위해 써다오."],
+			"recruit_companion_id": "mira",
+			"completed": false
 		}
 	}
 	completed_story_events.clear()
@@ -381,7 +397,8 @@ func queue_story_event_by_region(region_id: String) -> void:
 		return
 	var rumor_to_event: Dictionary = {
 		"rumor_garon": {"region_id": "r2", "event_id": "recruit_garon", "companion_id": "garon"},
-		"rumor_elin": {"region_id": "r3", "event_id": "recruit_elin", "companion_id": "elin"}
+		"rumor_elin": {"region_id": "r3", "event_id": "recruit_elin", "companion_id": "elin"},
+		"rumor_mira": {"region_id": "r7", "event_id": "recruit_mira", "companion_id": "mira"}
 	}
 	if not rumor_to_event.has(active_rumor_id):
 		return
@@ -441,6 +458,17 @@ func resolve_pending_story_event(_choice_index: int) -> String:
 	elif resolved_event_id == "recruit_elin":
 		complete_rumor("rumor_elin")
 		pending_castle_event_id = "elin_arrival"
+		if active_rumor_id == "" and rumors.has("rumor_mira"):
+			track_rumor("rumor_mira")
+	elif resolved_event_id == "recruit_mira":
+		complete_rumor("rumor_mira")
+		pending_castle_event_id = "mira_arrival"
+		var unlocked_sorcerer: bool = unlock_unit_class("sorcerer")
+		var recruit_text: String = "%s이(가) 동료로 합류했습니다!" % companion_name
+		if unlocked_sorcerer:
+			recruit_text += "\n소서러 병종이 해금되었습니다!"
+		pending_story_event_id = ""
+		return recruit_text
 	pending_story_event_id = ""
 	return "%s이(가) 동료로 합류했습니다!" % companion_name
 
@@ -595,6 +623,8 @@ func update_pending_castle_event() -> void:
 		pending_castle_event_id = "garon_arrival"
 	elif has_companion_joined("elin") and not completed_castle_events.has("elin_arrival"):
 		pending_castle_event_id = "elin_arrival"
+	elif has_companion_joined("mira") and not completed_castle_events.has("mira_arrival"):
+		pending_castle_event_id = "mira_arrival"
 
 func has_pending_castle_event() -> bool:
 	return pending_castle_event_id != ""

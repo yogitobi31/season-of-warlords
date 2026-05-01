@@ -10,9 +10,11 @@ extends Control
 @onready var leon_marker: Panel = $SceneRoot/LeonMarker
 @onready var garon_marker: Panel = $SceneRoot/GaronMarker
 @onready var elin_marker: Panel = $SceneRoot/ElinMarker
+@onready var mira_marker: Panel = $SceneRoot/MiraMarker
 @onready var leon_button: Button = $SceneRoot/LeonMarker/LeonButton
 @onready var garon_button: Button = $SceneRoot/GaronMarker/GaronButton
 @onready var elin_button: Button = $SceneRoot/ElinMarker/ElinButton
+@onready var mira_button: Button = $SceneRoot/MiraMarker/MiraButton
 @onready var gate_button: Button = $SceneRoot/Gate/GateButton
 @onready var rumor_board_button: Button = $SceneRoot/RumorBoard/RumorBoardButton
 @onready var training_dummy_button: Button = $SceneRoot/TrainingDummy/TrainingDummyButton
@@ -23,8 +25,8 @@ extends Control
 
 @onready var info_popup_overlay: Control = $UILayer/InfoPopupOverlay
 @onready var popup_title_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupTitleLabel
-@onready var popup_body_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupBodyLabel
-@onready var popup_vbox: VBoxContainer = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox
+@onready var popup_body_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupBodyScroll/PopupBodyLabel
+@onready var popup_actions_container: HBoxContainer = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupActionsHBox
 @onready var popup_close_button: Button = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupCloseButton
 
 @onready var rumor_overlay: Control = $UILayer/RumorOverlay
@@ -45,6 +47,7 @@ var opening_active: bool = false
 var upgrade_barracks_button: Button
 var upgrade_training_button: Button
 var upgrade_lodging_button: Button
+var current_popup_mode: String = ""
 
 func _ready() -> void:
 	build_character_markers()
@@ -61,6 +64,7 @@ func _ready() -> void:
 	leon_button.pressed.connect(_on_leon_pressed)
 	garon_button.pressed.connect(_on_garon_pressed)
 	elin_button.pressed.connect(_on_elin_pressed)
+	mira_button.pressed.connect(_on_mira_pressed)
 	rumor_button.pressed.connect(_on_rumor_pressed)
 	companion_button.pressed.connect(_on_companion_popup_pressed)
 	manage_button.pressed.connect(_on_manage_popup_pressed)
@@ -78,19 +82,19 @@ func setup_manage_buttons() -> void:
 	upgrade_barracks_button.text = "병영 강화"
 	upgrade_barracks_button.custom_minimum_size = Vector2(0, 34)
 	upgrade_barracks_button.pressed.connect(_on_upgrade_barracks_pressed)
-	popup_vbox.add_child(upgrade_barracks_button)
+	popup_actions_container.add_child(upgrade_barracks_button)
 
 	upgrade_training_button = Button.new()
 	upgrade_training_button.text = "훈련장 강화"
 	upgrade_training_button.custom_minimum_size = Vector2(0, 34)
 	upgrade_training_button.pressed.connect(_on_upgrade_training_pressed)
-	popup_vbox.add_child(upgrade_training_button)
+	popup_actions_container.add_child(upgrade_training_button)
 
 	upgrade_lodging_button = Button.new()
 	upgrade_lodging_button.text = "숙소 강화"
 	upgrade_lodging_button.custom_minimum_size = Vector2(0, 34)
 	upgrade_lodging_button.pressed.connect(_on_upgrade_lodging_pressed)
-	popup_vbox.add_child(upgrade_lodging_button)
+	popup_actions_container.add_child(upgrade_lodging_button)
 
 func create_character_sprite(character_name: String, character_title: String, body_color: Color) -> Control:
 	var root: Control = Control.new()
@@ -141,12 +145,17 @@ func build_character_markers() -> void:
 	for child: Node in elin_marker.get_children():
 		if child != elin_button:
 			child.queue_free()
+	for child: Node in mira_marker.get_children():
+		if child != mira_button:
+			child.queue_free()
 	leon_marker.add_child(create_character_sprite("레온", "청람 기사", Color(0.2, 0.38, 0.8, 1)))
 	garon_marker.add_child(create_character_sprite("가론", "용병대장", Color(0.46, 0.28, 0.2, 1)))
 	elin_marker.add_child(create_character_sprite("엘린", "숲의 사수", Color(0.2, 0.55, 0.3, 1)))
+	mira_marker.add_child(create_character_sprite("미라", "견습 마법사", Color(0.45, 0.3, 0.8, 1)))
 	leon_marker.move_child(leon_button, leon_marker.get_child_count() - 1)
 	garon_marker.move_child(garon_button, garon_marker.get_child_count() - 1)
 	elin_marker.move_child(elin_button, elin_marker.get_child_count() - 1)
+	mira_marker.move_child(mira_button, mira_marker.get_child_count() - 1)
 
 func _on_expedition_pressed() -> void:
 	if opening_active:
@@ -187,6 +196,16 @@ func _on_elin_pressed() -> void:
 	dialogue_text_label.text = "숲의 바람이 이 성채까지 닿는군. 다음 출정에서는 내가 길을 보겠다."
 	dialogue_panel.visible = true
 
+
+func _on_mira_pressed() -> void:
+	if opening_active:
+		return
+	if not GameState.has_companion_joined("mira"):
+		return
+	dialogue_speaker_label.text = "미라"
+	dialogue_text_label.text = "고대 유적의 마법은 아직 위험하지만… 청람 성채라면 다르게 쓸 수 있을 것 같아요."
+	dialogue_panel.visible = true
+
 func _on_dialogue_confirm_pressed() -> void:
 	if opening_active:
 		advance_opening()
@@ -196,20 +215,26 @@ func _on_dialogue_confirm_pressed() -> void:
 func _on_companion_popup_pressed() -> void:
 	if opening_active:
 		return
-	show_popup("동료 보기", build_companion_text())
+	show_popup("동료 보기", build_companion_text(), "companion")
 
 func _on_manage_popup_pressed() -> void:
 	if opening_active:
 		return
-	show_popup("성채 관리", build_manage_text())
+	show_popup("성채 관리", build_manage_text(), "manage")
 
-func show_popup(title: String, body: String) -> void:
+func show_popup(title: String, body: String, mode: String = "generic") -> void:
+	current_popup_mode = mode
 	popup_title_label.text = title
 	popup_body_label.text = body
+	var is_manage_mode: bool = (mode == "manage")
+	upgrade_barracks_button.visible = is_manage_mode
+	upgrade_training_button.visible = is_manage_mode
+	upgrade_lodging_button.visible = is_manage_mode
 	info_popup_overlay.visible = true
 
 func _on_close_info_popup_pressed() -> void:
 	info_popup_overlay.visible = false
+	current_popup_mode = ""
 
 func build_companion_text() -> String:
 	var lines: Array[String] = ["동료 목록"]
@@ -241,33 +266,28 @@ func build_manage_text() -> String:
 	lines.append("- 자재: %d" % GameState.materials)
 	lines.append("- 명성: %d" % GameState.renown)
 	lines.append("")
-	lines.append("자원 설명:")
-	lines.append("- 금화: 훈련과 장비의 기본 화폐")
-	lines.append("- 보급: 출정과 회복의 유지 자원")
-	lines.append("- 자재: 성채와 장비 강화 자원")
-	lines.append("- 명성: 사람들의 신뢰와 해금 조건")
-	lines.append("")
 	lines.append("시설:")
 	lines.append("- 병영 Lv.%d" % GameState.barracks_level)
 	lines.append("- 훈련장 Lv.%d" % GameState.training_ground_level)
 	lines.append("- 숙소 Lv.%d" % GameState.lodging_level)
 	lines.append("")
-	lines.append("업그레이드 비용")
-	lines.append("- 병영 Lv.%d (다음 비용 Gold %d / 재료 %d)" % [GameState.barracks_level, int(cost_barracks.get("gold", 0)), int(cost_barracks.get("materials", 0))])
-	lines.append("- 훈련장 Lv.%d (다음 비용 Gold %d / 재료 %d)" % [GameState.training_ground_level, int(cost_training.get("gold", 0)), int(cost_training.get("materials", 0))])
-	lines.append("- 숙소 Lv.%d (다음 비용 Gold %d / 재료 %d)" % [GameState.lodging_level, int(cost_lodging.get("gold", 0)), int(cost_lodging.get("materials", 0))])
+	lines.append("강화 효과:")
+	lines.append("- 병영: 일반 병사 HP 증가")
+	lines.append("- 훈련장: 일반 병사 공격력 증가")
+	lines.append("- 숙소: 사기 보너스 증가")
 	lines.append("")
-	lines.append("다음 추천:")
+	lines.append("다음 비용:")
+	lines.append("- 병영 강화: 금화 %d / 자재 %d" % [int(cost_barracks.get("gold", 0)), int(cost_barracks.get("materials", 0))])
+	lines.append("- 훈련장 강화: 금화 %d / 자재 %d" % [int(cost_training.get("gold", 0)), int(cost_training.get("materials", 0))])
+	lines.append("- 숙소 강화: 금화 %d / 자재 %d" % [int(cost_lodging.get("gold", 0)), int(cost_lodging.get("materials", 0))])
+	lines.append("")
+	lines.append("추천:")
 	if GameState.barracks_level < 2:
-		lines.append("- 북부 감시요새 전에는 병영 Lv.2를 추천합니다.")
+		lines.append("- 북부 감시요새 전에는 병영 Lv.2 추천")
 	if not GameState.is_unit_class_unlocked("shieldbearer"):
-		lines.append("- 무너진 초소를 점령하면 방패보병을 해금할 수 있습니다.")
+		lines.append("- 무너진 초소 점령 시 방패보병 해금")
 	if not GameState.is_unit_class_unlocked("spearman"):
-		lines.append("- 낡은 훈련장을 정리하면 창병을 해금할 수 있습니다.")
-	lines.append("")
-	lines.append(build_facilities_text())
-	lines.append("")
-	lines.append(build_castle_people_text())
+		lines.append("- 낡은 훈련장 정리 시 창병 해금")
 	return "\n".join(lines)
 
 func _on_upgrade_barracks_pressed() -> void:
@@ -282,10 +302,9 @@ func _on_upgrade_lodging_pressed() -> void:
 func _try_upgrade(upgrade_key: String) -> void:
 	var success: bool = GameState.try_upgrade_castle(upgrade_key)
 	if success:
-		popup_title_label.text = "성채 관리 (강화 성공)"
+		show_popup("성채 관리 - 강화 성공", build_manage_text(), "manage")
 	else:
-		popup_title_label.text = "성채 관리 (자원 부족)"
-	popup_body_label.text = build_manage_text()
+		show_popup("성채 관리 - 자원 부족", build_manage_text(), "manage")
 
 func build_castle_people_text() -> String:
 	var lines: Array[String] = ["성채 인물"]
@@ -299,7 +318,7 @@ func refresh_quest_log() -> void:
 	elif not GameState.has_companion_joined("elin"):
 		quest_log_label.text = "현재 목표:\n서리숲 관문의 숲의 사수를 찾아라"
 	elif not GameState.has_companion_joined("mira"):
-		quest_log_label.text = "현재 목표:\n고대 유적지에서 들려오는 이상한 빛의 소문을 조사하라"
+		quest_log_label.text = "현재 목표:\n고대 유적지의 견습 마법사를 찾아라"
 	else:
 		quest_log_label.text = "현재 목표:\n성채를 정비하고 다음 원정을 준비하라"
 
@@ -356,7 +375,7 @@ func _on_close_rumor_pressed() -> void:
 func _on_training_dummy_pressed() -> void:
 	if opening_active:
 		return
-	show_popup("훈련 목각", build_training_dummy_text())
+	show_popup("훈련 목각", build_training_dummy_text(), "training")
 
 func build_training_dummy_text() -> String:
 	var lines: Array[String] = []
@@ -382,6 +401,7 @@ func build_training_dummy_text() -> String:
 func refresh_courtyard_people() -> void:
 	garon_marker.visible = GameState.has_companion_joined("garon")
 	elin_marker.visible = GameState.has_companion_joined("elin")
+	mira_marker.visible = GameState.has_companion_joined("mira")
 
 func refresh_castle_event_panel() -> void:
 	if GameState.pending_castle_event_id == "garon_arrival":
@@ -394,7 +414,17 @@ func refresh_castle_event_panel() -> void:
 		castle_event_dialogue_label.text = "레온:\n\"주군, 서리숲 관문에서 온 사수가 도착했습니다.\"\n\n엘린:\n\"여기가 청람 성채구나.\"\n\"낡았네. 하지만… 난민들이 말한 것처럼, 아직 불빛은 남아 있어.\"\n\n레온:\n\"말은 조심하는 게 좋을 거다.\"\n\n엘린:\n\"걱정 마. 난 거짓 깃발에는 활을 겨누지만, 지키려는 사람에게는 등을 맡겨.\"\n\n레온:\n\"주군, 엘린이 합류한 것은 큰 힘이 될 겁니다.\"\n\n엘린이 청람 성채에 합류했습니다."
 		castle_event_overlay.visible = true
 		return
+	if GameState.pending_castle_event_id == "mira_arrival":
+		castle_event_speaker_label.text = "레온 / 미라"
+		castle_event_dialogue_label.text = "레온:\n\"주군, 고대 유적지에서 데려온 견습 마법사가 도착했습니다.\"\n\n미라:\n\"여기가 청람 성채군요.\"\n\"생각보다… 낡았지만, 이상하게 따뜻해요.\"\n\n가론:\n\"마법사는 처음부터 믿기 어렵군.\"\n\n엘린:\n\"하지만 저 아이의 손은 떨리고 있어. 병기가 되고 싶은 사람의 눈은 아니야.\"\n\n미라:\n\"저는 강해지고 싶어요. 하지만 누군가를 지키기 위해 강해지고 싶어요.\"\n\n레온:\n\"주군, 미라가 합류했습니다. 이제 청람 성채도 마법의 힘을 다룰 수 있게 될 겁니다.\"\n\n미라가 청람 성채에 합류했습니다."
+		castle_event_overlay.visible = true
+		return
 	castle_event_overlay.visible = false
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and info_popup_overlay.visible and not opening_active:
+		_on_close_info_popup_pressed()
+		get_viewport().set_input_as_handled()
 
 func _on_castle_event_confirm_pressed() -> void:
 	if opening_active:
@@ -403,6 +433,8 @@ func _on_castle_event_confirm_pressed() -> void:
 		GameState.complete_castle_event("garon_arrival")
 	elif GameState.pending_castle_event_id == "elin_arrival":
 		GameState.complete_castle_event("elin_arrival")
+	elif GameState.pending_castle_event_id == "mira_arrival":
+		GameState.complete_castle_event("mira_arrival")
 	refresh_castle_event_panel()
 	refresh_rumor_panel()
 	refresh_quest_log()
