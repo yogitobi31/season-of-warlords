@@ -3,12 +3,12 @@ extends Node2D
 const OBJECTIVE_PANEL_POS: Vector2 = Vector2(30, 35)
 const OBJECTIVE_PANEL_SIZE: Vector2 = Vector2(300, 150)
 const DETAIL_PANEL_POS: Vector2 = Vector2(935, 35)
-const DETAIL_PANEL_SIZE: Vector2 = Vector2(330, 430)
-const COMPANION_PANEL_POS: Vector2 = Vector2(935, 485)
-const COMPANION_PANEL_SIZE: Vector2 = Vector2(330, 150)
+const DETAIL_PANEL_SIZE: Vector2 = Vector2(320, 350)
+const COMPANION_PANEL_POS: Vector2 = Vector2(935, 400)
+const COMPANION_PANEL_SIZE: Vector2 = Vector2(320, 210)
 const MAP_AREA_POS: Vector2 = Vector2(340, 120)
 const MAP_AREA_SIZE: Vector2 = Vector2(560, 560)
-const REGION_SIZE: Vector2 = Vector2(132, 60)
+const REGION_SIZE: Vector2 = Vector2(124, 56)
 
 var region_nodes: Dictionary = {}
 var info_label: Label
@@ -58,14 +58,15 @@ func create_ui() -> void:
 	add_child(region_panel)
 
 	var region_scroll: ScrollContainer = ScrollContainer.new()
-	region_scroll.position = Vector2(10, 10)
-	region_scroll.size = Vector2(310, 410)
+	region_scroll.position = Vector2(12, 12)
+	region_scroll.size = Vector2(296, 326)
 	region_panel.add_child(region_scroll)
 
 	region_detail_label = Label.new()
-	region_detail_label.custom_minimum_size = Vector2(296, 396)
+	region_detail_label.custom_minimum_size = Vector2(292, 322)
 	region_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	region_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	region_detail_label.add_theme_constant_override("line_spacing", 3)
 	region_detail_label.text = "지역을 선택하면 상세 정보가 표시됩니다."
 	region_scroll.add_child(region_detail_label)
 
@@ -74,23 +75,29 @@ func create_ui() -> void:
 	status_panel.size = COMPANION_PANEL_SIZE
 	add_child(status_panel)
 
+	var companion_scroll: ScrollContainer = ScrollContainer.new()
+	companion_scroll.position = Vector2(12, 12)
+	companion_scroll.size = Vector2(296, 186)
+	status_panel.add_child(companion_scroll)
+
 	companions_label = Label.new()
-	companions_label.position = Vector2(12, 10)
-	companions_label.size = Vector2(306, 130)
+	companions_label.custom_minimum_size = Vector2(292, 182)
+	companions_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	companions_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status_panel.add_child(companions_label)
+	companions_label.add_theme_constant_override("line_spacing", 3)
+	companion_scroll.add_child(companions_label)
 
 	fortress_button = Button.new()
 	fortress_button.text = "성채 보기"
-	fortress_button.position = Vector2(935, 650)
-	fortress_button.size = Vector2(155, 40)
+	fortress_button.position = Vector2(935, 625)
+	fortress_button.size = Vector2(158, 40)
 	fortress_button.pressed.connect(_on_fortress_button_pressed)
 	add_child(fortress_button)
 
 	return_button = Button.new()
 	return_button.text = "성채로 돌아가기"
-	return_button.position = Vector2(1110, 650)
-	return_button.size = Vector2(155, 40)
+	return_button.position = Vector2(1097, 625)
+	return_button.size = Vector2(158, 40)
 	return_button.pressed.connect(_on_return_button_pressed)
 	add_child(return_button)
 
@@ -173,17 +180,17 @@ func refresh_regions() -> void:
 		node.set_attackable(_is_attackable_from_selection(region_id))
 
 func refresh_companions_panel() -> void:
-	var lines: Array[String] = ["동료:"]
+	var lines: Array[String] = ["동료"]
 	for companion_variant: Variant in GameState.get_companions_list():
 		var companion: Dictionary = companion_variant
 		if companion.get("joined", false):
-			lines.append("%s Lv.%d EXP %d/100" % [
+			lines.append("- %s Lv.%d EXP %d/100" % [
 				companion.get("name", "?"),
 				int(companion.get("level", 1)),
 				int(companion.get("exp", 0))
 			])
 		else:
-			lines.append("%s 미합류" % companion.get("name", "?"))
+			lines.append("- %s 미합류" % companion.get("name", "?"))
 	lines.append("")
 	lines.append("해금 병종")
 	lines.append("- 보병")
@@ -405,16 +412,24 @@ func _format_reward_preview(region_data: Dictionary) -> String:
 
 func _format_region_detail(region_id: String, region_data: Dictionary, reward_text: String, enemy_preview: String) -> String:
 	var lines: Array[String] = []
+	lines.append("[지역 정보]")
 	lines.append("지역: %s" % GameState.get_region_name(region_id))
 	lines.append("세력: %s" % GameState.FACTION_NAMES.get(GameState.get_region_owner(region_id), "미상"))
 	lines.append("위험도: %s" % str(region_data.get("danger", "보통")))
+	lines.append("")
+	lines.append("[전투 정보]")
 	lines.append("권장 준비: %s" % str(region_data.get("recommended", "기본 병력")))
 	lines.append("전투 유형: %s" % str(region_data.get("encounter_type", "미상")))
 	lines.append("예상 적: %s" % enemy_preview)
-	lines.append("획득 보상: %s" % reward_text)
+	lines.append("")
+	lines.append("[획득 보상]")
+	lines.append(reward_text.replace(" / 명성 ", "\n명성 "))
+	lines.append("")
+	lines.append("[활용]")
 	lines.append("보상 성격: %s" % str(region_data.get("economy_role", "일반")))
 	lines.append("활용 팁: %s" % str(region_data.get("suggested_use", "전력을 점검하고 출정하세요.")))
 	if region_data.has("unlock_class"):
+		lines.append("")
 		lines.append("해금 요소: %s" % str(region_data.get("unlock_class", "")))
 	return "\n".join(lines)
 
