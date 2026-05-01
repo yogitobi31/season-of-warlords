@@ -58,12 +58,6 @@ func update_visual() -> void:
 	custom_minimum_size = REGION_SIZE
 	size = REGION_SIZE
 
-	var marker: String = ""
-	if is_selected:
-		marker = "▶ "
-	elif is_attackable:
-		marker = "⚔ "
-
 	var status_line: String = ""
 	if is_rumor_target:
 		status_line = "★소문"
@@ -72,7 +66,7 @@ func update_visual() -> void:
 	else:
 		status_line = ""
 
-	text = "%s%s" % [marker, region_name]
+	text = region_name
 	if status_line != "":
 		text += "\n%s" % status_line
 
