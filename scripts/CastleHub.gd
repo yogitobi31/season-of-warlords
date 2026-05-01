@@ -23,6 +23,9 @@ extends Control
 @onready var rumor_board_panel: Control = $SceneRoot/RumorBoard
 @onready var training_dummy_panel: Control = $SceneRoot/TrainingDummy
 @onready var management_panel: Control = $SceneRoot/ManagementArea
+@onready var wall_visual: ColorRect = $SceneRoot/Wall
+@onready var floor_visual: ColorRect = $SceneRoot/Floor
+@onready var stone_tiles_visual: ColorRect = $SceneRoot/StoneTiles
 
 @onready var rumor_button: Button = $UILayer/TopMenu/RumorButton
 @onready var companion_button: Button = $UILayer/TopMenu/CompanionButton
@@ -56,6 +59,18 @@ var contextual_close_button: Button
 var selected_target_id: String = ""
 const DEFAULT_COURTYARD_TEXT: String = "청람 성채 안뜰이다. 소문 게시판을 확인하거나 성문을 통해 출정할 수 있다."
 const CASTLE_HUB_PIXEL_ASSET_ROOT: String = "res://assets/pixel/castlehub/"
+const CASTLE_HUB_REQUIRED_TEXTURE_PATHS: Array[String] = [
+	"res://assets/pixel/castlehub/characters/leon_idle.png",
+	"res://assets/pixel/castlehub/characters/garon_idle.png",
+	"res://assets/pixel/castlehub/characters/elin_idle.png",
+	"res://assets/pixel/castlehub/characters/mira_idle.png",
+	"res://assets/pixel/castlehub/objects/rumor_board.png",
+	"res://assets/pixel/castlehub/objects/training_dummy.png",
+	"res://assets/pixel/castlehub/objects/castle_gate.png",
+	"res://assets/pixel/castlehub/objects/management_desk.png",
+	"res://assets/pixel/castlehub/tiles/courtyard_ground_tile.png",
+	"res://assets/pixel/castlehub/tiles/castle_wall_tile.png"
+]
 
 var rumor_panel_rumor_id: String = ""
 var opening_lines: Array[String] = []
@@ -69,6 +84,8 @@ var hovered_upgrade_key: String = ""
 
 func _ready() -> void:
 	apply_castlehub_pixel_art_if_available()
+	configure_interaction_layers()
+	log_missing_castlehub_textures()
 	build_character_markers()
 	refresh_quest_log()
 	refresh_rumor_panel()
@@ -236,6 +253,48 @@ func apply_castlehub_pixel_art_if_available() -> void:
 	add_pixel_texture_to_control(rumor_board_panel, CASTLE_HUB_PIXEL_ASSET_ROOT + "objects/rumor_board.png")
 	add_pixel_texture_to_control(training_dummy_panel, CASTLE_HUB_PIXEL_ASSET_ROOT + "objects/training_dummy.png")
 	add_pixel_texture_to_control(management_panel, CASTLE_HUB_PIXEL_ASSET_ROOT + "objects/management_desk.png")
+
+func apply_tile_texture_if_available(target: ColorRect, texture_path: String) -> bool:
+	if target == null:
+		return false
+	var texture: Texture2D = try_load_texture(texture_path)
+	if not texture:
+		return false
+	var tile_overlay: TextureRect = TextureRect.new()
+	tile_overlay.name = "PixelTileVisual"
+	tile_overlay.texture = texture
+	tile_overlay.anchor_right = 1.0
+	tile_overlay.anchor_bottom = 1.0
+	tile_overlay.stretch_mode = TextureRect.STRETCH_TILE
+	tile_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	target.add_child(tile_overlay)
+	target.move_child(tile_overlay, 0)
+	return true
+
+func configure_interaction_layers() -> void:
+	apply_tile_texture_if_available(floor_visual, CASTLE_HUB_PIXEL_ASSET_ROOT + "tiles/courtyard_ground_tile.png")
+	apply_tile_texture_if_available(wall_visual, CASTLE_HUB_PIXEL_ASSET_ROOT + "tiles/castle_wall_tile.png")
+	apply_tile_texture_if_available(stone_tiles_visual, CASTLE_HUB_PIXEL_ASSET_ROOT + "tiles/courtyard_ground_tile.png")
+
+	for decorative_path: NodePath in [
+		NodePath("SceneRoot/Gate/GateLabel"),
+		NodePath("SceneRoot/RumorBoard/RumorBoardLabel"),
+		NodePath("SceneRoot/TrainingDummy/TrainingDummyLabel"),
+		NodePath("SceneRoot/ManagementArea/ManagementLabel"),
+		NodePath("SceneRoot/Keep/KeepLabel")
+	]:
+		var decorative_control: Control = get_node_or_null(decorative_path) as Control
+		if decorative_control:
+			decorative_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	for hotspot: Button in [leon_button, garon_button, elin_button, mira_button, gate_button, rumor_board_button, training_dummy_button, management_button]:
+		hotspot.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func log_missing_castlehub_textures() -> void:
+	for texture_path: String in CASTLE_HUB_REQUIRED_TEXTURE_PATHS:
+		if not ResourceLoader.exists(texture_path):
+			push_warning("CastleHub texture missing, fallback visuals in use: %s" % texture_path)
 
 func build_character_markers() -> void:
 	for child: Node in leon_marker.get_children():
