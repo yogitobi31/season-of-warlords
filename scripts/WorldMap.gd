@@ -9,6 +9,7 @@ const COMPANION_PANEL_SIZE: Vector2 = Vector2(320, 210)
 const MAP_AREA_POS: Vector2 = Vector2(340, 120)
 const MAP_AREA_SIZE: Vector2 = Vector2(560, 560)
 const REGION_SIZE: Vector2 = RegionNode.CLICK_SIZE
+# TODO: Keep map markers compact and drive labels from hover/selection per docs/worldmap_ux_spec.md.
 
 var region_nodes: Dictionary = {}
 var info_label: Label

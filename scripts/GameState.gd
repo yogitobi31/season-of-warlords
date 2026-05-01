@@ -73,12 +73,15 @@ var fortress_data: Dictionary = {
 var selected_region_id: String = ""
 var attack_region_id: String = ""
 var defense_region_id: String = ""
-var current_expedition_mode: String = "conquest"
+var current_expedition_mode: String = "conquest" # TODO: Expand flow with docs/region_event_system.md RegionEvent states.
 var current_region_id: String = ""
 var current_region_event_id: String = ""
 var last_battle_result: String = ""
 var last_battle_message: String = ""
 var resolved_region_events: Array[String] = []
+
+const REGION_ACTION_TYPES: Array[String] = ["conquest", "exploration", "rescue", "defense", "escort", "ambush", "choice", "training", "resource", "ritual"]
+const REGION_OBJECTIVE_TYPES: Array[String] = ["rout", "survive", "protect", "investigate", "choice", "unlock", "boss", "resource"]
 
 const UNIT_CLASSES: Dictionary = {
 	"infantry": {"display_name": "보병", "max_hp": 100.0, "attack": 12.0, "move_speed": 80.0, "attack_range": 26.0, "role": "균형형 전열", "strengths": "특화 없음", "weaknesses": "전문화된 상성 대응 부족"},
