@@ -257,7 +257,10 @@ func _on_region_clicked(region_id: String) -> void:
 	var region_data: Dictionary = GameState.regions.get(region_id, {})
 	var danger_text: String = str(region_data.get("danger", "보통"))
 	var recommended_text: String = str(region_data.get("recommended", "기본 병력"))
-	var select_hint: String = "위험도: %s / 권장 준비: %s" % [danger_text, recommended_text]
+	var encounter_type: String = str(region_data.get("encounter_type", "미상"))
+	var reward_preview: String = str(region_data.get("reward_preview", _format_reward_preview(region_data)))
+	var enemy_class_preview: String = _format_expected_enemy_classes(region_data)
+	var select_hint: String = "위험도: %s / 권장 준비: %s\n조우 유형: %s / 보상: %s\n예상 병종: %s" % [danger_text, recommended_text, encounter_type, reward_preview, enemy_class_preview]
 
 	if GameState.selected_region_id == "":
 		if region_owner != GameState.PLAYER_FACTION:
@@ -302,6 +305,21 @@ func _is_attackable_from_selection(region_id: String) -> bool:
 		return false
 	return GameState.get_region_owner(region_id) != GameState.PLAYER_FACTION
 
+
+
+func _format_reward_preview(region_data: Dictionary) -> String:
+	var reward_data: Dictionary = region_data.get("reward", {})
+	return "Gold %d / 재료 %d / 명성 %d / 동료EXP %d" % [int(reward_data.get("gold", 0)), int(reward_data.get("materials", 0)), int(reward_data.get("renown", 0)), int(reward_data.get("companion_exp", 0))]
+
+func _format_expected_enemy_classes(region_data: Dictionary) -> String:
+	var names: Array[String] = []
+	for class_variant: Variant in region_data.get("expected_enemy_classes", []):
+		var class_id: String = str(class_variant)
+		var class_data: Dictionary = GameState.UNIT_CLASSES.get(class_id, {})
+		names.append(str(class_data.get("display_name", class_id)))
+	if names.is_empty():
+		return "정보 없음"
+	return ", ".join(names)
 
 func _on_return_button_pressed() -> void:
 	GameState.clear_selection()

@@ -47,6 +47,7 @@ var renown: int = 0
 var barracks_level: int = 1
 var training_ground_level: int = 0
 var lodging_level: int = 0
+var unlocked_unit_classes: Array[String] = ["infantry"]
 
 # 기본 성채 데이터 (MVP)
 var fortress_data: Dictionary = {
@@ -65,6 +66,16 @@ var attack_region_id: String = ""
 var defense_region_id: String = ""
 var last_battle_result: String = ""
 var last_battle_message: String = ""
+
+const UNIT_CLASSES: Dictionary = {
+	"infantry": {"display_name": "보병", "max_hp": 100.0, "attack": 12.0, "move_speed": 80.0, "attack_range": 26.0, "role": "균형형 전열", "strengths": "특화 없음", "weaknesses": "전문화된 상성 대응 부족"},
+	"spearman": {"display_name": "창병", "max_hp": 92.0, "attack": 12.5, "move_speed": 82.0, "attack_range": 28.0, "role": "대기병 대응", "strengths": "기병에게 강함", "weaknesses": "방패보병 상대로 장기전 약세"},
+	"shieldbearer": {"display_name": "방패보병", "max_hp": 128.0, "attack": 9.5, "move_speed": 68.0, "attack_range": 24.0, "role": "탱커", "strengths": "궁수 피해 감소", "weaknesses": "마법에 취약"},
+	"cavalry": {"display_name": "기병", "max_hp": 104.0, "attack": 13.5, "move_speed": 112.0, "attack_range": 24.0, "role": "돌격", "strengths": "궁수/소서러 견제", "weaknesses": "창병에게 취약"},
+	"archer": {"display_name": "궁수", "max_hp": 78.0, "attack": 11.5, "move_speed": 78.0, "attack_range": 120.0, "role": "원거리 화력", "strengths": "안전한 견제", "weaknesses": "기병에게 취약"},
+	"cleric": {"display_name": "성직자", "max_hp": 86.0, "attack": 7.0, "move_speed": 76.0, "attack_range": 72.0, "role": "지원", "strengths": "사기/회복 지원", "weaknesses": "화력 부족"},
+	"sorcerer": {"display_name": "소서러", "max_hp": 74.0, "attack": 15.0, "move_speed": 74.0, "attack_range": 96.0, "role": "마법 화력", "strengths": "방패보병/밀집대형 대응", "weaknesses": "기병에게 취약"}
+}
 
 func _ready() -> void:
 	initialize_regions()
@@ -87,6 +98,7 @@ func initialize_regions() -> void:
 	barracks_level = 1
 	training_ground_level = 0
 	lodging_level = 0
+	unlocked_unit_classes = ["infantry"]
 
 func initialize_companions() -> void:
 	companions = {
@@ -217,6 +229,61 @@ func clear_selection() -> void:
 	attack_region_id = ""
 	defense_region_id = ""
 
+
+func is_unit_class_unlocked(class_id: String) -> bool:
+	return unlocked_unit_classes.has(class_id)
+
+func unlock_unit_class(class_id: String) -> bool:
+	if not UNIT_CLASSES.has(class_id):
+		return false
+	if unlocked_unit_classes.has(class_id):
+		return false
+	unlocked_unit_classes.append(class_id)
+	return true
+
+func get_player_composition() -> Array[String]:
+	var composition: Array[String] = []
+	for i: int in range(6):
+		composition.append("infantry")
+	if is_unit_class_unlocked("spearman"):
+		composition.append("spearman")
+		composition.append("spearman")
+	if is_unit_class_unlocked("shieldbearer"):
+		composition.append("shieldbearer")
+		composition.append("shieldbearer")
+	while composition.size() < 10:
+		composition.append("infantry")
+	if composition.size() > 10:
+		var trimmed: Array[String] = []
+		for i: int in range(10):
+			trimmed.append(composition[i])
+		composition = trimmed
+	return composition
+
+func get_region_enemy_classes(region_id: String) -> Array[String]:
+	var fallback: Array[String] = ["infantry"]
+	if not regions.has(region_id):
+		return fallback
+	var region_data: Dictionary = regions[region_id]
+	if region_data.has("expected_enemy_classes"):
+		var classes: Array[String] = []
+		for class_variant: Variant in region_data.get("expected_enemy_classes", []):
+			classes.append(str(class_variant))
+		if not classes.is_empty():
+			return classes
+	var encounter_type: String = str(region_data.get("encounter_type", ""))
+	match encounter_type:
+		"bandit":
+			return ["infantry", "infantry"]
+		"beast":
+			return ["cavalry", "infantry"]
+		"crimson_scout":
+			return ["infantry", "archer"]
+		"fortress":
+			return ["infantry", "shieldbearer", "archer"]
+		_:
+			return fallback
+
 func get_region_owner(region_id: String) -> int:
 	return ownership.get(region_id, -1)
 
@@ -345,6 +412,11 @@ func apply_battle_result(player_won: bool) -> void:
 		queue_story_event_by_region(defense_region_id)
 		if has_pending_story_event():
 			messages.append("새로운 동료 이벤트가 발생했습니다.")
+		var unlocked_messages: Array[String] = []
+		var unlock_class_id: String = str(regions[defense_region_id].get("unlock_class", ""))
+		if unlock_class_id != "" and unlock_unit_class(unlock_class_id):
+			var class_data: Dictionary = UNIT_CLASSES.get(unlock_class_id, {})
+			unlocked_messages.append("신규 병종 해금: %s" % str(class_data.get("display_name", unlock_class_id)))
 		var reward_text: String = "보상: Gold %d / 재료 %d / 명성 %d / 동료 EXP %d" % [
 			int(rewards.get("gold", 0)),
 			int(rewards.get("materials", 0)),
@@ -352,6 +424,7 @@ func apply_battle_result(player_won: bool) -> void:
 			int(rewards.get("companion_exp", COMPANION_EXP_PER_WIN))
 		]
 		messages.append(reward_text)
+		messages.append_array(unlocked_messages)
 		messages.append_array(grant_companion_exp_on_victory(int(rewards.get("companion_exp", COMPANION_EXP_PER_WIN))))
 		last_battle_message = "\n".join(messages)
 	else:
