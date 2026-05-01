@@ -19,7 +19,13 @@ const FACTION_COLORS := {
 
 const COMPANION_EXP_PER_WIN: int = 30
 const COMPANION_LEVELUP_EXP: int = 100
-const DEFAULT_BATTLE_REWARD: Dictionary = {"gold": 60, "materials": 15, "renown": 3, "companion_exp": 30}
+const DEFAULT_BATTLE_REWARD: Dictionary = {"gold": 60, "supplies": 15, "materials": 15, "renown": 3, "companion_exp": 30}
+const RESOURCE_DEFINITIONS: Dictionary = {
+	"gold": {"display_name": "금화", "description": "병사 고용, 훈련, 장비 구입에 쓰이는 범용 화폐입니다."},
+	"supplies": {"display_name": "보급", "description": "출정 유지, 회복, 병참과 숙소 운영에 필요한 물자입니다."},
+	"materials": {"display_name": "자재", "description": "성채 강화, 대장간, 장비 제작에 필요한 건축/제작 재료입니다."},
+	"renown": {"display_name": "명성", "description": "청람 성채에 대한 신뢰와 평판입니다. 동료, 소문, 직업 해금 조건으로 사용됩니다."}
+}
 
 # 지역 원본 데이터 (인접 정보 포함)
 var regions: Dictionary = {}
@@ -417,13 +423,11 @@ func apply_battle_result(player_won: bool) -> void:
 		if unlock_class_id != "" and unlock_unit_class(unlock_class_id):
 			var class_data: Dictionary = UNIT_CLASSES.get(unlock_class_id, {})
 			unlocked_messages.append("신규 병종 해금: %s" % str(class_data.get("display_name", unlock_class_id)))
-		var reward_text: String = "보상: Gold %d / 재료 %d / 명성 %d / 동료 EXP %d" % [
-			int(rewards.get("gold", 0)),
-			int(rewards.get("materials", 0)),
-			int(rewards.get("renown", 0)),
-			int(rewards.get("companion_exp", COMPANION_EXP_PER_WIN))
-		]
-		messages.append(reward_text)
+		messages.append("획득 보상: %s" % format_reward_text(rewards))
+		var suggested_use_text: String = str(regions[defense_region_id].get("suggested_use", ""))
+		if suggested_use_text == "":
+			suggested_use_text = "병영·훈련장 강화에 사용할 수 있습니다."
+		messages.append("보상 활용: %s" % suggested_use_text)
 		messages.append_array(unlocked_messages)
 		messages.append_array(grant_companion_exp_on_victory(int(rewards.get("companion_exp", COMPANION_EXP_PER_WIN))))
 		last_battle_message = "\n".join(messages)
@@ -442,9 +446,47 @@ func get_region_rewards(region_id: String) -> Dictionary:
 
 func apply_rewards(reward_data: Dictionary) -> void:
 	gold += int(reward_data.get("gold", 0))
+	supplies += int(reward_data.get("supplies", 0))
 	materials += int(reward_data.get("materials", 0))
 	renown += int(reward_data.get("renown", 0))
-	supplies += 5
+
+func get_resource_display_name(resource_id: String) -> String:
+	var resource_definition: Dictionary = RESOURCE_DEFINITIONS.get(resource_id, {})
+	return str(resource_definition.get("display_name", resource_id))
+
+func get_resource_amount(resource_id: String) -> int:
+	match resource_id:
+		"gold":
+			return gold
+		"supplies":
+			return supplies
+		"materials":
+			return materials
+		"renown":
+			return renown
+		_:
+			return 0
+
+func get_resource_summary_text() -> String:
+	var parts: Array[String] = []
+	var ordered_ids: Array[String] = ["gold", "supplies", "materials", "renown"]
+	for resource_id: String in ordered_ids:
+		parts.append("%s %d" % [get_resource_display_name(resource_id), get_resource_amount(resource_id)])
+	return " / ".join(parts)
+
+func format_reward_text(reward_data: Dictionary) -> String:
+	var reward_parts: Array[String] = []
+	var ordered_ids: Array[String] = ["gold", "supplies", "materials", "renown"]
+	for resource_id: String in ordered_ids:
+		var amount: int = int(reward_data.get(resource_id, 0))
+		if amount > 0:
+			reward_parts.append("%s +%d" % [get_resource_display_name(resource_id), amount])
+	var companion_exp: int = int(reward_data.get("companion_exp", 0))
+	if companion_exp > 0:
+		reward_parts.append("동료 EXP +%d" % companion_exp)
+	if reward_parts.is_empty():
+		return "없음"
+	return " / ".join(reward_parts)
 
 func get_soldier_hp_bonus() -> float:
 	return float(barracks_level - 1) * 18.0

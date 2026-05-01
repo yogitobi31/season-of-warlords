@@ -145,7 +145,7 @@ func refresh_companions_panel() -> void:
 func refresh_fortress_panel() -> void:
 	var lines: Array[String] = []
 	lines.append("%s Lv.%d" % [GameState.fortress_data["name"], GameState.fortress_data["level"]])
-	lines.append("자원: Gold %d / 보급 %d / 재료 %d / 명성 %d" % [GameState.gold, GameState.supplies, GameState.materials, GameState.renown])
+	lines.append("현재 자원: %s" % GameState.get_resource_summary_text())
 	lines.append("강화: 병영 Lv.%d / 훈련장 Lv.%d / 숙소 Lv.%d" % [GameState.barracks_level, GameState.training_ground_level, GameState.lodging_level])
 	lines.append("")
 	lines.append("시설")
@@ -260,7 +260,15 @@ func _on_region_clicked(region_id: String) -> void:
 	var encounter_type: String = str(region_data.get("encounter_type", "미상"))
 	var reward_preview: String = str(region_data.get("reward_preview", _format_reward_preview(region_data)))
 	var enemy_class_preview: String = _format_expected_enemy_classes(region_data)
-	var select_hint: String = "위험도: %s / 권장 준비: %s\n조우 유형: %s / 보상: %s\n예상 병종: %s" % [danger_text, recommended_text, encounter_type, reward_preview, enemy_class_preview]
+	var reward_data: Dictionary = region_data.get("reward", {})
+	var reward_text: String = GameState.format_reward_text(reward_data)
+	var focus_text: String = str(region_data.get("economy_role", ""))
+	var suggested_use_text: String = str(region_data.get("suggested_use", ""))
+	var select_hint: String = "지역: %s\n위험도: %s\n권장 준비: %s\n전투 유형: %s\n예상 적: %s\n보상 미리보기: %s\n예상 보상: %s" % [GameState.get_region_name(region_id), danger_text, recommended_text, encounter_type, enemy_class_preview, reward_preview, reward_text]
+	if focus_text != "":
+		select_hint += "\n보상 성격: %s" % focus_text
+	if suggested_use_text != "":
+		select_hint += "\n활용 팁: %s" % suggested_use_text
 
 	if GameState.selected_region_id == "":
 		if region_owner != GameState.PLAYER_FACTION:
@@ -309,7 +317,7 @@ func _is_attackable_from_selection(region_id: String) -> bool:
 
 func _format_reward_preview(region_data: Dictionary) -> String:
 	var reward_data: Dictionary = region_data.get("reward", {})
-	return "Gold %d / 재료 %d / 명성 %d / 동료EXP %d" % [int(reward_data.get("gold", 0)), int(reward_data.get("materials", 0)), int(reward_data.get("renown", 0)), int(reward_data.get("companion_exp", 0))]
+	return GameState.format_reward_text(reward_data)
 
 func _format_expected_enemy_classes(region_data: Dictionary) -> String:
 	var names: Array[String] = []
