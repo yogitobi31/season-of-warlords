@@ -118,7 +118,9 @@ func refresh_regions() -> void:
 	for region_id in region_nodes.keys():
 		var node: RegionNode = region_nodes[region_id]
 		var region_name: String = GameState.get_region_name(region_id)
-		if GameState.active_rumor_id == "rumor_garon" and region_id == "r2":
+		var is_rumor_target: bool = (GameState.active_rumor_id == "rumor_garon" and region_id == "r2")
+		is_rumor_target = is_rumor_target or (GameState.active_rumor_id == "rumor_elin" and region_id == "r3")
+		if is_rumor_target:
 			node.region_name = "[소문 목표] %s" % region_name
 		else:
 			node.region_name = region_name
@@ -128,7 +130,8 @@ func refresh_regions() -> void:
 
 func refresh_companions_panel() -> void:
 	var lines: Array[String] = ["동료"]
-	for companion in GameState.get_companions_list():
+	for companion_variant: Variant in GameState.get_companions_list():
+		var companion: Dictionary = companion_variant
 		if companion.get("joined", false):
 			lines.append("%s Lv.%d EXP %d/100" % [
 				companion.get("name", "?"),
@@ -237,8 +240,8 @@ func _show_story_result_panel() -> void:
 
 func _on_story_result_confirmed() -> void:
 	story_event_result_active = false
-	GameState.last_battle_message = story_event_join_message
-	info_label.text = story_event_join_message
+	GameState.last_battle_message = "가론이 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
+	info_label.text = "가론이 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
 	refresh_companions_panel()
 	refresh_fortress_panel()
 	refresh_story_event_panel()

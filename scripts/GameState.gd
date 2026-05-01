@@ -32,6 +32,8 @@ var companions: Dictionary = {}
 var story_events: Dictionary = {}
 var completed_story_events: Dictionary = {}
 var pending_story_event_id: String = ""
+var pending_castle_event_id: String = ""
+var completed_castle_events: Array[String] = []
 
 var active_rumor_id: String = ""
 var rumors: Dictionary = {}
@@ -148,10 +150,20 @@ func initialize_rumors() -> void:
 			"related_companion_id": "garon",
 			"active": false,
 			"completed": false
+		},
+		"rumor_elin": {
+			"id": "rumor_elin",
+			"title": "서리숲 관문의 숲의 사수",
+			"target_region_id": "r3",
+			"related_companion_id": "elin",
+			"active": false,
+			"completed": false
 		}
 	}
 	completed_rumors.clear()
 	active_rumor_id = ""
+	pending_castle_event_id = ""
+	completed_castle_events.clear()
 
 func track_rumor(rumor_id: String) -> bool:
 	if not rumors.has(rumor_id):
@@ -298,6 +310,9 @@ func resolve_pending_story_event(_choice_index: int) -> String:
 	completed_story_events[pending_story_event_id] = true
 	if pending_story_event_id == "recruit_garon":
 		complete_rumor("rumor_garon")
+		update_pending_castle_event()
+		if active_rumor_id == "":
+			track_rumor("rumor_elin")
 	pending_story_event_id = ""
 	return "%s이(가) 동료로 합류했습니다!" % companion_name
 
@@ -319,3 +334,32 @@ func apply_battle_result(player_won: bool) -> void:
 		last_battle_message = "패배... %s로 후퇴합니다." % retreat_region_name
 
 	clear_selection()
+
+func has_companion_joined(companion_id: String) -> bool:
+	if not companions.has(companion_id):
+		return false
+	var companion: Dictionary = companions[companion_id]
+	return bool(companion.get("joined", false))
+
+func get_available_rumor_ids() -> Array[String]:
+	var rumor_ids: Array[String] = []
+	var garon_joined: bool = has_companion_joined("garon")
+	var elin_joined: bool = has_companion_joined("elin")
+	if not garon_joined:
+		rumor_ids.append("rumor_garon")
+	elif not elin_joined:
+		rumor_ids.append("rumor_elin")
+	return rumor_ids
+
+func update_pending_castle_event() -> void:
+	if has_companion_joined("garon") and not completed_castle_events.has("garon_arrival"):
+		pending_castle_event_id = "garon_arrival"
+
+func has_pending_castle_event() -> bool:
+	return pending_castle_event_id != ""
+
+func complete_castle_event(event_id: String) -> void:
+	if not completed_castle_events.has(event_id):
+		completed_castle_events.append(event_id)
+	if pending_castle_event_id == event_id:
+		pending_castle_event_id = ""
