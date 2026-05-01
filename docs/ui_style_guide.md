@@ -1,36 +1,30 @@
-# Season of Warlords UI Style Guide
+# UI Style Guide (WorldMap)
 
-## Core Rules
-1. One piece of information appears in only one place.
-2. Do not place long text directly over the central map or scene.
-3. Region map markers remain compact; central map avoids long text and shows only marker/icon + optional rumor marker.
-4. Detailed information belongs in panels.
-5. Buttons must not stretch vertically.
-6. Korean tooltip/info text must have enough width.
-7. Close buttons must always remain visible.
-8. UI spacing should follow 8/12/16/24 px rhythm.
-9. Before adding content, check for overlap.
-10. Map area should contain only nodes, route lines, and minimal markers.
+## Compact Marker Principle
+- 중앙 지도는 긴 텍스트 버튼이 아닌 **소형 마커** 중심으로 구성합니다.
+- 지역명은 hover/선택 시 또는 우측 패널에서 확인합니다.
 
-## WorldMap Rules
-- Left panel: current rumor/objective/controls.
-- Right panel: selected region detail.
-- Lower right panel: companions and unlocked classes.
-- Central map: region nodes and route lines only.
-- Keep map nodes compact; action/objective/event flavor text stays in side panels.
+## Layout Rules
+- 지도: 마커 + 연결선 중심
+- 긴 설명 텍스트: 우측 상세 패널
+- 현재 목표: 좌측 상단(중복 노출 최소화)
 
-## CastleHub Rules
-- Castle courtyard is the scene.
-- Management popup uses fixed sections:
-  title, summary, upgrade info, buttons, close.
-- Upgrade details appear in only one info panel.
+## Right Panel as Source of Truth
+우측 패널에서 지역의 핵심 정보를 제공합니다.
+- 지역명
+- 소유 세력
+- 행동 유형/목표 유형
+- 이벤트 상태
+- 사건 설명/특수 규칙
+- 예상 보상
 
-## WorldMap Region Node Rules
-- Region nodes should be compact markers, not large text buttons.
-- Visible marker: about 18~24 px.
-- Click area: about 44~48 px.
-- Region names are hidden by default.
-- Region names appear on hover or selection.
-- Details belong in the right-side panel.
-- Do not solve map clutter by making larger spacing forever.
-- Future map should support pan/zoom and zoom-level-based labels.
+## Marker States (Placeholder)
+마커는 상태를 색/테두리/아이콘으로 표현합니다.
+- 잠김/이용 가능
+- 선택됨
+- 해결됨
+- 플레이어 소유/적 소유
+- 소문/미해결 이벤트 강조
+
+## Future Zoom/Pan
+현재 패스에서는 미구현. 다만 마커/패널 분리 구조를 유지해 추후 줌/패닝 확장을 용이하게 합니다.
