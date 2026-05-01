@@ -5,6 +5,9 @@ extends Control
 @onready var castle_people_label: Label = $MainMargin/MainVBox/CenterHBox/SideInfoVBox/CastlePeoplePanel/CastlePeopleLabel
 @onready var chapter_progress_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ChapterProgressPanel/ChapterProgressLabel
 @onready var status_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/StatusLabel
+@onready var leon_dialogue_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/RpgDialoguePanel/RpgDialogueMargin/RpgDialogueHBox/LeonDialogue
+@onready var dialogue_confirm_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/RpgDialoguePanel/RpgDialogueMargin/RpgDialogueHBox/DialogueConfirmButton
+@onready var garon_marker: Control = $MainMargin/MainVBox/CenterHBox/ScenePanel/Courtyard/GaronMarker
 @onready var expedition_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/ExpeditionButton
 @onready var rumor_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/RumorButton
 @onready var companion_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/CompanionButton
@@ -29,6 +32,8 @@ func _ready() -> void:
 	refresh_chapter_progress()
 	refresh_status_message()
 	refresh_rumor_panel()
+	refresh_dialogue_box()
+	refresh_courtyard_people()
 	GameState.update_pending_castle_event()
 	refresh_castle_event_panel()
 	expedition_button.pressed.connect(_on_expedition_pressed)
@@ -39,6 +44,7 @@ func _ready() -> void:
 	rumor_track_button.pressed.connect(_on_track_rumor_pressed)
 	rumor_close_button.pressed.connect(_on_close_rumor_pressed)
 	castle_event_confirm_button.pressed.connect(_on_castle_event_confirm_pressed)
+	dialogue_confirm_button.pressed.connect(_on_dialogue_confirm_pressed)
 
 func refresh_companions() -> void:
 	var lines: Array[String] = ["동료 목록"]
@@ -145,3 +151,16 @@ func _on_castle_event_confirm_pressed() -> void:
 	refresh_rumor_panel()
 	refresh_chapter_progress()
 	refresh_castle_people()
+
+
+func refresh_dialogue_box() -> void:
+	if GameState.has_companion_joined("garon"):
+		leon_dialogue_label.text = "주군, 가론이 성문 쪽 순찰을 맡고 있습니다. 다음 출정을 준비하죠."
+		return
+	leon_dialogue_label.text = "주군, 북부 감시요새에 이상한 소문이 돌고 있습니다."
+
+func refresh_courtyard_people() -> void:
+	garon_marker.visible = GameState.has_companion_joined("garon")
+
+func _on_dialogue_confirm_pressed() -> void:
+	refresh_dialogue_box()

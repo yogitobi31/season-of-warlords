@@ -2,8 +2,8 @@ extends Node2D
 class_name Unit
 
 # 팀 구분 상수
-const TEAM_PLAYER := 0
-const TEAM_ENEMY := 1
+const TEAM_PLAYER: int = 0
+const TEAM_ENEMY: int = 1
 
 # 유닛 기본 능력치
 @export var max_hp: float = 100.0
@@ -25,7 +25,7 @@ var name_label: Label
 func _ready() -> void:
 	hp = max_hp
 	_shape = ColorRect.new()
-	var body_size := Vector2(16, 16)
+	var body_size: Vector2 = Vector2(16, 16)
 	if is_companion:
 		body_size = Vector2(24, 24)
 	_shape.size = body_size
@@ -55,28 +55,28 @@ func tick_ai(delta: float, enemies: Array[Unit]) -> void:
 
 	_cooldown_timer = max(_cooldown_timer - delta, 0.0)
 
-	var target := _find_nearest_enemy(enemies)
+	var target: Unit = _find_nearest_enemy(enemies)
 	if target == null:
 		return
 
-	var dist := global_position.distance_to(target.global_position)
+	var dist: float = global_position.distance_to(target.global_position)
 	if dist <= attack_range:
 		if _cooldown_timer <= 0.0:
 			target.take_damage(attack_power)
 			_cooldown_timer = attack_cooldown
 	else:
-		var dir := (target.global_position - global_position).normalized()
+		var dir: Vector2 = (target.global_position - global_position).normalized()
 		global_position += dir * move_speed * delta
 
 func _find_nearest_enemy(enemies: Array[Unit]) -> Unit:
 	var nearest: Unit = null
-	var nearest_dist := INF
+	var nearest_dist: float = INF
 	for enemy in enemies:
 		if enemy == null or not is_instance_valid(enemy):
 			continue
 		if not enemy.is_alive():
 			continue
-		var d := global_position.distance_to(enemy.global_position)
+		var d: float = global_position.distance_to(enemy.global_position)
 		if d < nearest_dist:
 			nearest_dist = d
 			nearest = enemy

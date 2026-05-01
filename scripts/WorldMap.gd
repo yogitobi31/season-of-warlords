@@ -167,7 +167,7 @@ func show_default_message() -> void:
 			var target_region_id: String = str(active_rumor.get("target_region_id", ""))
 			rumor_lines.append("목표: %s" % GameState.get_region_name(target_region_id))
 			rumor_lines.append("")
-	var base_text: String = "출정 지도: 목표 지역을 선택하세요.\n청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
+	var base_text: String = "출정 지도: 목적지를 선택하세요.\n청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 	info_label.text = result_text + "\n".join(rumor_lines) + base_text
 
 func refresh_story_event_panel() -> void:
