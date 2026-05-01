@@ -104,16 +104,16 @@ func update_visual() -> void:
 	if danger_text == "이벤트":
 		base_color = base_color.lightened(0.22)
 
-	var normal_style := StyleBoxFlat.new()
+	var normal_style: StyleBoxFlat = StyleBoxFlat.new()
 	normal_style.bg_color = base_color
 	normal_style.border_color = border_color
 	normal_style.set_border_width_all(border_width)
 	normal_style.set_corner_radius_all(10)
 
-	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	var hover_style: StyleBoxFlat = normal_style.duplicate() as StyleBoxFlat
 	hover_style.bg_color = base_color.lightened(0.18)
 
-	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	var pressed_style: StyleBoxFlat = normal_style.duplicate() as StyleBoxFlat
 	pressed_style.bg_color = base_color.darkened(0.18)
 
 	add_theme_stylebox_override("normal", normal_style)
