@@ -17,6 +17,7 @@
 - Right panel: selected region detail.
 - Lower right panel: companions and unlocked classes.
 - Central map: region nodes and route lines only.
+- Keep map nodes compact; action/objective/event flavor text stays in side panels.
 
 ## CastleHub Rules
 - Castle courtyard is the scene.

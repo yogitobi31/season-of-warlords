@@ -72,8 +72,11 @@ var fortress_data: Dictionary = {
 var selected_region_id: String = ""
 var attack_region_id: String = ""
 var defense_region_id: String = ""
+var current_expedition_mode: String = "conquest"
+var current_region_event_id: String = ""
 var last_battle_result: String = ""
 var last_battle_message: String = ""
+var resolved_region_events: Array[String] = []
 
 const UNIT_CLASSES: Dictionary = {
 	"infantry": {"display_name": "보병", "max_hp": 100.0, "attack": 12.0, "move_speed": 80.0, "attack_range": 26.0, "role": "균형형 전열", "strengths": "특화 없음", "weaknesses": "전문화된 상성 대응 부족"},
@@ -97,6 +100,9 @@ func initialize_regions() -> void:
 	initialize_story_events()
 	initialize_rumors()
 	clear_selection()
+	current_expedition_mode = "conquest"
+	current_region_event_id = ""
+	resolved_region_events.clear()
 	last_battle_result = ""
 	last_battle_message = ""
 	gold = 120
@@ -353,13 +359,52 @@ func is_adjacent(from_region_id: String, to_region_id: String) -> bool:
 	return to_region_id in neighbors
 
 func set_battle_context(attacker_region_id: String, defender_region_id: String) -> void:
-	attack_region_id = attacker_region_id
-	defense_region_id = defender_region_id
+	set_expedition_context(attacker_region_id, defender_region_id, "conquest")
+
+func set_expedition_context(from_region_id: String, target_region_id: String, mode: String) -> void:
+	attack_region_id = from_region_id
+	defense_region_id = target_region_id
+	current_expedition_mode = mode
+	current_region_event_id = target_region_id
 
 func get_battle_title() -> String:
 	if attack_region_id == "" or defense_region_id == "":
 		return "전투"
-	return "전투: %s → %s" % [get_region_name(attack_region_id), get_region_name(defense_region_id)]
+	match current_expedition_mode:
+		"exploration":
+			return "조사: %s" % get_region_name(defense_region_id)
+		"ambush":
+			return "매복전: %s" % get_region_name(defense_region_id)
+		"defense":
+			return "방어전: %s" % get_region_name(defense_region_id)
+		"choice":
+			return "결단: %s" % get_region_name(defense_region_id)
+		_:
+			return "전투: %s → %s" % [get_region_name(attack_region_id), get_region_name(defense_region_id)]
+
+func get_region_action_type(region_id: String) -> String:
+	if not regions.has(region_id):
+		return "conquest"
+	return str(regions[region_id].get("action_type", "conquest"))
+
+func is_region_event_resolved(region_id: String) -> bool:
+	return resolved_region_events.has(region_id)
+
+func mark_region_event_resolved(region_id: String) -> void:
+	if resolved_region_events.has(region_id):
+		return
+	resolved_region_events.append(region_id)
+
+func region_has_unresolved_event(region_id: String) -> bool:
+	if not regions.has(region_id):
+		return false
+	if is_region_event_resolved(region_id):
+		return false
+	var event_id_text: String = str(regions[region_id].get("event_id", ""))
+	if event_id_text != "":
+		return true
+	var action_type: String = get_region_action_type(region_id)
+	return action_type in ["exploration", "choice", "training", "resource"]
 
 func get_companions_list() -> Array:
 	var result: Array = []
@@ -477,6 +522,22 @@ func apply_battle_result(player_won: bool) -> void:
 	var retreat_region_name: String = get_region_name(attack_region_id)
 
 	if player_won and defense_region_id != "":
+		if current_expedition_mode == "exploration":
+			last_battle_result = "player_win"
+			var explore_messages: Array[String] = ["조사 완료! %s의 봉인이 풀렸습니다." % attacked_region_name]
+			var explore_rewards: Dictionary = get_region_rewards(defense_region_id)
+			apply_rewards(explore_rewards)
+			mark_region_event_resolved(defense_region_id)
+			queue_story_event_by_region(defense_region_id)
+			if has_pending_story_event():
+				explore_messages.append("새로운 동료 이벤트가 발생했습니다.")
+			explore_messages.append("획득 보상: %s" % format_reward_text(explore_rewards))
+			explore_messages.append_array(grant_companion_exp_on_victory(int(explore_rewards.get("companion_exp", COMPANION_EXP_PER_WIN))))
+			last_battle_message = "\n".join(explore_messages)
+			clear_selection()
+			current_expedition_mode = "conquest"
+			current_region_event_id = ""
+			return
 		set_region_owner(defense_region_id, PLAYER_FACTION)
 		last_battle_result = "player_win"
 		var messages: Array[String] = ["승리! %s를 점령했습니다." % attacked_region_name]
@@ -503,6 +564,8 @@ func apply_battle_result(player_won: bool) -> void:
 		last_battle_message = "패배... %s로 후퇴합니다." % retreat_region_name
 
 	clear_selection()
+	current_expedition_mode = "conquest"
+	current_region_event_id = ""
 
 func get_region_rewards(region_id: String) -> Dictionary:
 	if not regions.has(region_id):
