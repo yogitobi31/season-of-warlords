@@ -19,6 +19,7 @@ const FACTION_COLORS := {
 
 const COMPANION_EXP_PER_WIN: int = 30
 const COMPANION_LEVELUP_EXP: int = 100
+const DEFAULT_BATTLE_REWARD: Dictionary = {"gold": 60, "materials": 15, "renown": 3, "companion_exp": 30}
 
 # 지역 원본 데이터 (인접 정보 포함)
 var regions: Dictionary = {}
@@ -39,6 +40,13 @@ var opening_seen: bool = false
 var active_rumor_id: String = ""
 var rumors: Dictionary = {}
 var completed_rumors: Array[String] = []
+var gold: int = 120
+var supplies: int = 80
+var materials: int = 60
+var renown: int = 0
+var barracks_level: int = 1
+var training_ground_level: int = 0
+var lodging_level: int = 0
 
 # 기본 성채 데이터 (MVP)
 var fortress_data: Dictionary = {
@@ -72,6 +80,13 @@ func initialize_regions() -> void:
 	clear_selection()
 	last_battle_result = ""
 	last_battle_message = ""
+	gold = 120
+	supplies = 80
+	materials = 60
+	renown = 0
+	barracks_level = 1
+	training_ground_level = 0
+	lodging_level = 0
 
 func initialize_companions() -> void:
 	companions = {
@@ -246,13 +261,13 @@ func get_joined_companions() -> Array:
 			result.append(data)
 	return result
 
-func grant_companion_exp_on_victory() -> Array[String]:
+func grant_companion_exp_on_victory(exp_gain: int = COMPANION_EXP_PER_WIN) -> Array[String]:
 	var level_up_messages: Array[String] = []
 	for companion_id in companions.keys():
 		var companion: Dictionary = companions[companion_id]
 		if not companion.get("joined", false):
 			continue
-		var current_exp: int = int(companion.get("exp", 0)) + COMPANION_EXP_PER_WIN
+		var current_exp: int = int(companion.get("exp", 0)) + exp_gain
 		var current_level: int = int(companion.get("level", 1))
 		while current_exp >= COMPANION_LEVELUP_EXP:
 			current_exp -= COMPANION_LEVELUP_EXP
@@ -325,16 +340,77 @@ func apply_battle_result(player_won: bool) -> void:
 		set_region_owner(defense_region_id, PLAYER_FACTION)
 		last_battle_result = "player_win"
 		var messages: Array[String] = ["승리! %s를 점령했습니다." % attacked_region_name]
+		var rewards: Dictionary = get_region_rewards(defense_region_id)
+		apply_rewards(rewards)
 		queue_story_event_by_region(defense_region_id)
 		if has_pending_story_event():
 			messages.append("새로운 동료 이벤트가 발생했습니다.")
-		messages.append_array(grant_companion_exp_on_victory())
+		var reward_text: String = "보상: Gold %d / 재료 %d / 명성 %d / 동료 EXP %d" % [
+			int(rewards.get("gold", 0)),
+			int(rewards.get("materials", 0)),
+			int(rewards.get("renown", 0)),
+			int(rewards.get("companion_exp", COMPANION_EXP_PER_WIN))
+		]
+		messages.append(reward_text)
+		messages.append_array(grant_companion_exp_on_victory(int(rewards.get("companion_exp", COMPANION_EXP_PER_WIN))))
 		last_battle_message = "\n".join(messages)
 	else:
 		last_battle_result = "player_lose"
 		last_battle_message = "패배... %s로 후퇴합니다." % retreat_region_name
 
 	clear_selection()
+
+func get_region_rewards(region_id: String) -> Dictionary:
+	if not regions.has(region_id):
+		return DEFAULT_BATTLE_REWARD.duplicate(true)
+	var region_data: Dictionary = regions[region_id]
+	var reward_data: Dictionary = region_data.get("reward", DEFAULT_BATTLE_REWARD)
+	return reward_data.duplicate(true)
+
+func apply_rewards(reward_data: Dictionary) -> void:
+	gold += int(reward_data.get("gold", 0))
+	materials += int(reward_data.get("materials", 0))
+	renown += int(reward_data.get("renown", 0))
+	supplies += 5
+
+func get_soldier_hp_bonus() -> float:
+	return float(barracks_level - 1) * 18.0
+
+func get_soldier_attack_bonus() -> float:
+	return float(training_ground_level) * 1.6
+
+func get_army_morale_bonus() -> float:
+	return float(lodging_level) * 0.8
+
+func get_upgrade_cost(upgrade_key: String) -> Dictionary:
+	match upgrade_key:
+		"barracks":
+			return {"gold": 70 + barracks_level * 45, "materials": 30 + barracks_level * 18}
+		"training_ground":
+			return {"gold": 65 + training_ground_level * 50, "materials": 35 + training_ground_level * 20}
+		"lodging":
+			return {"gold": 55 + lodging_level * 40, "materials": 25 + lodging_level * 16}
+		_:
+			return {"gold": 9999, "materials": 9999}
+
+func try_upgrade_castle(upgrade_key: String) -> bool:
+	var cost: Dictionary = get_upgrade_cost(upgrade_key)
+	var need_gold: int = int(cost.get("gold", 0))
+	var need_materials: int = int(cost.get("materials", 0))
+	if gold < need_gold or materials < need_materials:
+		return false
+	gold -= need_gold
+	materials -= need_materials
+	match upgrade_key:
+		"barracks":
+			barracks_level += 1
+		"training_ground":
+			training_ground_level += 1
+		"lodging":
+			lodging_level += 1
+		_:
+			return false
+	return true
 
 func has_companion_joined(companion_id: String) -> bool:
 	if not companions.has(companion_id):

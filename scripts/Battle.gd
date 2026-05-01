@@ -39,6 +39,9 @@ func spawn_teams() -> void:
 	var joined_companions: Array = GameState.get_joined_companions()
 	var front_center_y: float = 360.0
 	var deployed_companions: Array[String] = []
+	var soldier_hp_bonus: float = GameState.get_soldier_hp_bonus()
+	var soldier_attack_bonus: float = GameState.get_soldier_attack_bonus()
+	var morale_bonus: float = GameState.get_army_morale_bonus()
 	var companion_count: int = joined_companions.size()
 	if companion_count > UNITS_PER_TEAM:
 		companion_count = UNITS_PER_TEAM
@@ -52,7 +55,13 @@ func spawn_teams() -> void:
 			p.unit_name = str(companion.get("name", "동료"))
 			p.level = int(companion.get("level", 1))
 			_apply_companion_stats(p, str(companion.get("id", "")), p.level)
+			p.max_hp += soldier_hp_bonus * 0.35
+			p.attack_power += soldier_attack_bonus * 0.35
+			p.attack_power += morale_bonus
 			deployed_companions.append(p.unit_name)
+		else:
+			p.max_hp += soldier_hp_bonus
+			p.attack_power += soldier_attack_bonus + morale_bonus
 		var lane: int = i % 5
 		var row: int = i / 5
 		var hero_offset: float = -12.0 if p.is_companion else 0.0

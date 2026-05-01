@@ -21,6 +21,7 @@ extends Control
 @onready var info_popup_overlay: Control = $UILayer/InfoPopupOverlay
 @onready var popup_title_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupTitleLabel
 @onready var popup_body_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupBodyLabel
+@onready var popup_vbox: VBoxContainer = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox
 @onready var popup_close_button: Button = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupCloseButton
 
 @onready var rumor_overlay: Control = $UILayer/RumorOverlay
@@ -38,6 +39,9 @@ var rumor_panel_rumor_id: String = ""
 var opening_lines: Array[String] = []
 var opening_index: int = 0
 var opening_active: bool = false
+var upgrade_barracks_button: Button
+var upgrade_training_button: Button
+var upgrade_lodging_button: Button
 
 func _ready() -> void:
 	build_character_markers()
@@ -61,7 +65,27 @@ func _ready() -> void:
 	castle_event_confirm_button.pressed.connect(_on_castle_event_confirm_pressed)
 	dialogue_confirm_button.pressed.connect(_on_dialogue_confirm_pressed)
 	setup_opening_lines()
+	setup_manage_buttons()
 	start_opening_if_needed()
+
+func setup_manage_buttons() -> void:
+	upgrade_barracks_button = Button.new()
+	upgrade_barracks_button.text = "병영 강화"
+	upgrade_barracks_button.custom_minimum_size = Vector2(0, 34)
+	upgrade_barracks_button.pressed.connect(_on_upgrade_barracks_pressed)
+	popup_vbox.add_child(upgrade_barracks_button)
+
+	upgrade_training_button = Button.new()
+	upgrade_training_button.text = "훈련장 강화"
+	upgrade_training_button.custom_minimum_size = Vector2(0, 34)
+	upgrade_training_button.pressed.connect(_on_upgrade_training_pressed)
+	popup_vbox.add_child(upgrade_training_button)
+
+	upgrade_lodging_button = Button.new()
+	upgrade_lodging_button.text = "숙소 강화"
+	upgrade_lodging_button.custom_minimum_size = Vector2(0, 34)
+	upgrade_lodging_button.pressed.connect(_on_upgrade_lodging_pressed)
+	popup_vbox.add_child(upgrade_lodging_button)
 
 func create_character_sprite(character_name: String, character_title: String, body_color: Color) -> Control:
 	var root: Control = Control.new()
@@ -158,7 +182,7 @@ func _on_companion_popup_pressed() -> void:
 func _on_manage_popup_pressed() -> void:
 	if opening_active:
 		return
-	show_popup("성채 관리", build_facilities_text() + "\n\n" + build_castle_people_text())
+	show_popup("성채 관리", build_manage_text())
 
 func show_popup(title: String, body: String) -> void:
 	popup_title_label.text = title
@@ -186,6 +210,44 @@ func build_facilities_text() -> String:
 		var facility: Dictionary = facility_variant
 		lines.append("- %s Lv.%d" % [str(facility.get("name", "시설")), int(facility.get("level", 0))])
 	return "\n".join(lines)
+
+func build_manage_text() -> String:
+	var cost_barracks: Dictionary = GameState.get_upgrade_cost("barracks")
+	var cost_training: Dictionary = GameState.get_upgrade_cost("training_ground")
+	var cost_lodging: Dictionary = GameState.get_upgrade_cost("lodging")
+	var lines: Array[String] = []
+	lines.append("자원")
+	lines.append("- Gold: %d" % GameState.gold)
+	lines.append("- 보급: %d" % GameState.supplies)
+	lines.append("- 재료: %d" % GameState.materials)
+	lines.append("- 명성: %d" % GameState.renown)
+	lines.append("")
+	lines.append("업그레이드")
+	lines.append("- 병영 Lv.%d (다음 비용 Gold %d / 재료 %d)" % [GameState.barracks_level, int(cost_barracks.get("gold", 0)), int(cost_barracks.get("materials", 0))])
+	lines.append("- 훈련장 Lv.%d (다음 비용 Gold %d / 재료 %d)" % [GameState.training_ground_level, int(cost_training.get("gold", 0)), int(cost_training.get("materials", 0))])
+	lines.append("- 숙소 Lv.%d (다음 비용 Gold %d / 재료 %d)" % [GameState.lodging_level, int(cost_lodging.get("gold", 0)), int(cost_lodging.get("materials", 0))])
+	lines.append("")
+	lines.append(build_facilities_text())
+	lines.append("")
+	lines.append(build_castle_people_text())
+	return "\n".join(lines)
+
+func _on_upgrade_barracks_pressed() -> void:
+	_try_upgrade("barracks")
+
+func _on_upgrade_training_pressed() -> void:
+	_try_upgrade("training_ground")
+
+func _on_upgrade_lodging_pressed() -> void:
+	_try_upgrade("lodging")
+
+func _try_upgrade(upgrade_key: String) -> void:
+	var success: bool = GameState.try_upgrade_castle(upgrade_key)
+	if success:
+		popup_title_label.text = "성채 관리 (강화 성공)"
+	else:
+		popup_title_label.text = "성채 관리 (자원 부족)"
+	popup_body_label.text = build_manage_text()
 
 func build_castle_people_text() -> String:
 	var lines: Array[String] = ["성채 인물"]
