@@ -18,6 +18,7 @@ extends Control
 @onready var gate_button: Button = $SceneRoot/Gate/GateButton
 @onready var rumor_board_button: Button = $SceneRoot/RumorBoard/RumorBoardButton
 @onready var training_dummy_button: Button = $SceneRoot/TrainingDummy/TrainingDummyButton
+@onready var management_button: Button = $SceneRoot/ManagementArea/ManagementButton
 
 @onready var rumor_button: Button = $UILayer/TopMenu/RumorButton
 @onready var companion_button: Button = $UILayer/TopMenu/CompanionButton
@@ -42,10 +43,14 @@ extends Control
 @onready var castle_event_dialogue_label: Label = $UILayer/CastleEventOverlay/CastleEventPanel/Margin/VBox/DialogueLabel
 @onready var castle_event_confirm_button: Button = $UILayer/CastleEventOverlay/CastleEventPanel/Margin/VBox/ConfirmButton
 
-var hub_objective_label: Label
 var hub_resource_label: Label
-var hub_help_label: Label
-var hub_action_panel: Panel
+var hub_hint_label: Label
+var contextual_menu_panel: Panel
+var contextual_menu_title: Label
+var contextual_primary_button: Button
+var contextual_close_button: Button
+var selected_target_id: String = ""
+const DEFAULT_COURTYARD_TEXT: String = "청람 성채 안뜰이다. 소문 게시판을 확인하거나 성문을 통해 출정할 수 있다."
 
 var rumor_panel_rumor_id: String = ""
 var opening_lines: Array[String] = []
@@ -66,15 +71,18 @@ func _ready() -> void:
 	GameState.update_pending_castle_event()
 	refresh_castle_event_panel()
 	build_hub_layout()
+	configure_scene_layout()
 	refresh_hub_header()
+	select_hub_target("")
 
-	gate_button.pressed.connect(_on_expedition_pressed)
-	rumor_board_button.pressed.connect(_on_rumor_pressed)
+	gate_button.pressed.connect(_on_gate_selected)
+	rumor_board_button.pressed.connect(_on_rumor_board_selected)
 	training_dummy_button.pressed.connect(_on_training_dummy_pressed)
 	leon_button.pressed.connect(_on_leon_pressed)
 	garon_button.pressed.connect(_on_garon_pressed)
 	elin_button.pressed.connect(_on_elin_pressed)
 	mira_button.pressed.connect(_on_mira_pressed)
+	management_button.pressed.connect(_on_management_selected)
 	rumor_button.pressed.connect(_on_rumor_pressed)
 	companion_button.pressed.connect(_on_companion_popup_pressed)
 	manage_button.pressed.connect(_on_manage_popup_pressed)
@@ -181,6 +189,16 @@ func build_character_markers() -> void:
 	elin_marker.move_child(elin_button, elin_marker.get_child_count() - 1)
 	mira_marker.move_child(mira_button, mira_marker.get_child_count() - 1)
 
+func _on_gate_selected() -> void:
+	if opening_active:
+		return
+	select_hub_target("gate")
+
+func _on_rumor_board_selected() -> void:
+	if opening_active:
+		return
+	select_hub_target("rumor")
+
 func _on_expedition_pressed() -> void:
 	if opening_active:
 		return
@@ -191,34 +209,26 @@ func _on_rumor_pressed() -> void:
 		return
 	refresh_rumor_panel()
 	rumor_overlay.visible = true
+	hide_contextual_menu()
 
 func _on_leon_pressed() -> void:
 	if opening_active:
 		return
-	dialogue_speaker_label.text = "레온"
-	if GameState.has_companion_joined("garon"):
-		dialogue_text_label.text = "주군, 가론이 성문 쪽 순찰을 맡고 있습니다. 다음 출정을 준비하죠."
-	else:
-		dialogue_text_label.text = "주군, 북부 감시요새에 이상한 소문이 돌고 있습니다."
-	dialogue_panel.visible = true
+	select_hub_target("leon")
 
 func _on_garon_pressed() -> void:
 	if opening_active:
 		return
 	if not GameState.has_companion_joined("garon"):
 		return
-	dialogue_speaker_label.text = "가론"
-	dialogue_text_label.text = "성채가 낡았어도 깃발은 살아 있군. 다음 원정에서 내 정찰대를 붙이겠다."
-	dialogue_panel.visible = true
+	select_hub_target("garon")
 
 func _on_elin_pressed() -> void:
 	if opening_active:
 		return
 	if not GameState.has_companion_joined("elin"):
 		return
-	dialogue_speaker_label.text = "엘린"
-	dialogue_text_label.text = "숲의 바람이 이 성채까지 닿는군. 다음 출정에서는 내가 길을 보겠다."
-	dialogue_panel.visible = true
+	select_hub_target("elin")
 
 
 func _on_mira_pressed() -> void:
@@ -226,9 +236,7 @@ func _on_mira_pressed() -> void:
 		return
 	if not GameState.has_companion_joined("mira"):
 		return
-	dialogue_speaker_label.text = "미라"
-	dialogue_text_label.text = "고대 유적의 마법은 아직 위험하지만… 청람 성채라면 다르게 쓸 수 있을 것 같아요."
-	dialogue_panel.visible = true
+	select_hub_target("mira")
 
 func _on_dialogue_confirm_pressed() -> void:
 	if opening_active:
@@ -416,59 +424,124 @@ func build_castle_people_text() -> String:
 
 
 func build_hub_layout() -> void:
-	hub_action_panel = Panel.new()
-	hub_action_panel.position = Vector2(930, 330)
-	hub_action_panel.size = Vector2(300, 250)
-	$SceneRoot.add_child(hub_action_panel)
-
-	var action_title: Label = Label.new()
-	action_title.position = Vector2(16, 12)
-	action_title.size = Vector2(268, 24)
-	action_title.text = "주요 행동"
-	hub_action_panel.add_child(action_title)
-
-	var button_box: VBoxContainer = VBoxContainer.new()
-	button_box.position = Vector2(16, 40)
-	button_box.size = Vector2(268, 170)
-	button_box.add_theme_constant_override("separation", 8)
-	hub_action_panel.add_child(button_box)
-
-	_configure_main_action_button(rumor_board_button, "소문 게시판", button_box)
-	_configure_main_action_button(gate_button, "월드맵 / 출정", button_box)
-	_configure_main_action_button(training_dummy_button, "훈련장", button_box)
-	_configure_main_action_button(manage_button, "성채 관리", button_box)
-
-	hub_objective_label = Label.new()
-	hub_objective_label.position = Vector2(22, 14)
-	hub_objective_label.size = Vector2(780, 26)
-	$UILayer.add_child(hub_objective_label)
-
 	hub_resource_label = Label.new()
-	hub_resource_label.position = Vector2(22, 40)
-	hub_resource_label.size = Vector2(780, 24)
+	hub_resource_label.position = Vector2(20, 10)
+	hub_resource_label.size = Vector2(980, 26)
+	hub_resource_label.add_theme_font_size_override("font_size", 18)
 	$UILayer.add_child(hub_resource_label)
 
-	hub_help_label = Label.new()
-	hub_help_label.position = Vector2(22, 66)
-	hub_help_label.size = Vector2(840, 40)
-	hub_help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	$UILayer.add_child(hub_help_label)
+	hub_hint_label = Label.new()
+	hub_hint_label.position = Vector2(20, 34)
+	hub_hint_label.size = Vector2(620, 20)
+	hub_hint_label.add_theme_font_size_override("font_size", 14)
+	$UILayer.add_child(hub_hint_label)
 
-func _configure_main_action_button(button: Button, button_text: String, parent_box: VBoxContainer) -> void:
-	if button.get_parent() != null:
-		button.get_parent().remove_child(button)
-	parent_box.add_child(button)
-	button.text = button_text
-	button.custom_minimum_size = Vector2(268, 36)
-	button.flat = false
-	button.disabled = false
+	contextual_menu_panel = Panel.new()
+	contextual_menu_panel.position = Vector2(930, 480)
+	contextual_menu_panel.size = Vector2(260, 130)
+	contextual_menu_panel.visible = false
+	$UILayer.add_child(contextual_menu_panel)
+
+	contextual_menu_title = Label.new()
+	contextual_menu_title.position = Vector2(14, 10)
+	contextual_menu_title.size = Vector2(230, 24)
+	contextual_menu_panel.add_child(contextual_menu_title)
+
+	contextual_primary_button = Button.new()
+	contextual_primary_button.position = Vector2(14, 40)
+	contextual_primary_button.size = Vector2(230, 34)
+	contextual_primary_button.pressed.connect(_on_contextual_primary_pressed)
+	contextual_menu_panel.add_child(contextual_primary_button)
+
+	contextual_close_button = Button.new()
+	contextual_close_button.position = Vector2(14, 82)
+	contextual_close_button.size = Vector2(230, 30)
+	contextual_close_button.text = "닫기"
+	contextual_close_button.pressed.connect(_on_contextual_close_pressed)
+	contextual_menu_panel.add_child(contextual_close_button)
+
+func configure_scene_layout() -> void:
+	$UILayer/QuestLogPanel.visible = false
+	status_label.visible = false
+	$UILayer/TopMenu.visible = false
+	dialogue_panel.visible = true
+	dialogue_panel.offset_left = 0
+	dialogue_panel.offset_right = 1280
+	dialogue_panel.offset_top = 520
+	dialogue_panel.offset_bottom = 720
+	dialogue_panel.self_modulate = Color(0.05, 0.07, 0.11, 0.86)
+	dialogue_speaker_label.visible = false
+	dialogue_confirm_button.visible = false
+	dialogue_text_label.custom_minimum_size = Vector2(0, 120)
+	dialogue_text_label.add_theme_font_size_override("font_size", 24)
+	dialogue_text_label.modulate = Color(0.95, 0.97, 1.0, 1.0)
 
 func refresh_hub_header() -> void:
-	if hub_objective_label == null:
+	hub_resource_label.text = "금화 %d   보급 %d   자재 %d   명성 %d" % [GameState.gold, GameState.supplies, GameState.materials, GameState.renown]
+	hub_hint_label.text = "목표: %s" % GameState.get_current_objective_text()
+
+func select_hub_target(target_id: String) -> void:
+	selected_target_id = target_id
+	if target_id == "":
+		dialogue_text_label.text = DEFAULT_COURTYARD_TEXT
+		hide_contextual_menu()
 		return
-	hub_objective_label.text = GameState.get_current_objective_text()
-	hub_resource_label.text = GameState.get_resource_summary_text().replace(" / ", " | ")
-	hub_help_label.text = "소문을 확인하고 출정할 지역을 선택하세요.\n동료가 합류하면 성채에 표시됩니다."
+	var command_label: String = "대화하기"
+	var title: String = "행동"
+	match target_id:
+		"leon":
+			dialogue_text_label.text = "레온: 지금은 작은 성채에 불과하지만, 동료가 모이면 달라질 겁니다."
+			title = "레온"
+		"gate":
+			dialogue_text_label.text = "성문 밖으로 나가 출정할 지역을 선택합니다."
+			command_label = "출정하기"
+			title = "성문"
+		"rumor":
+			dialogue_text_label.text = "새로운 소문과 사건을 확인할 수 있습니다."
+			command_label = "소문 확인"
+			title = "소문 게시판"
+		"training":
+			dialogue_text_label.text = "병사들의 기초 훈련을 진행할 수 있습니다."
+			command_label = "훈련장"
+			title = "훈련 목각"
+		"management":
+			dialogue_text_label.text = "성채 시설을 정비하고 강화할 수 있습니다."
+			command_label = "성채 관리"
+			title = "관리 구역"
+		"garon":
+			dialogue_text_label.text = "가론: 성문 주변은 내가 맡겠다. 다음 출정 준비는 끝났다."
+			title = "가론"
+		"elin":
+			dialogue_text_label.text = "엘린: 바람이 바뀌면 적의 움직임도 보여요. 제가 길을 찾겠습니다."
+			title = "엘린"
+		"mira":
+			dialogue_text_label.text = "미라: 아직 서툴지만, 이 성채를 지키는 마법을 배우고 싶어요."
+			title = "미라"
+	show_contextual_menu(title, command_label)
+
+func show_contextual_menu(title: String, action_text: String) -> void:
+	contextual_menu_title.text = title
+	contextual_primary_button.text = action_text
+	contextual_menu_panel.visible = true
+
+func hide_contextual_menu() -> void:
+	contextual_menu_panel.visible = false
+
+func _on_contextual_close_pressed() -> void:
+	select_hub_target("")
+
+func _on_contextual_primary_pressed() -> void:
+	match selected_target_id:
+		"gate":
+			_on_expedition_pressed()
+		"rumor":
+			_on_rumor_pressed()
+		"training":
+			show_popup("훈련 목각", build_training_dummy_text(), "training")
+		"management":
+			_on_manage_popup_pressed()
+		_:
+			pass
 
 func refresh_quest_log() -> void:
 	if not GameState.has_companion_joined("garon"):
@@ -481,16 +554,6 @@ func refresh_quest_log() -> void:
 		quest_log_label.text = "현재 목표:\n성채를 정비하고 다음 원정을 준비하라"
 
 func refresh_status_message() -> void:
-	if GameState.active_rumor_id == "rumor_garon":
-		status_label.text = "가론의 소문을 추적 중입니다. 성문을 클릭해 출정하세요."
-		return
-	if GameState.active_rumor_id == "rumor_elin":
-		status_label.text = "숲의 사수 소문을 추적 중입니다."
-		return
-	if GameState.active_rumor_id == "rumor_mira":
-		status_label.text = "고대 유적지의 마력 흔적을 조사 중입니다."
-		return
-	status_label.text = ""
 	refresh_hub_header()
 
 func refresh_rumor_panel() -> void:
@@ -534,7 +597,12 @@ func _on_close_rumor_pressed() -> void:
 func _on_training_dummy_pressed() -> void:
 	if opening_active:
 		return
-	show_popup("훈련 목각", build_training_dummy_text(), "training")
+	select_hub_target("training")
+
+func _on_management_selected() -> void:
+	if opening_active:
+		return
+	select_hub_target("management")
 
 func build_training_dummy_text() -> String:
 	var lines: Array[String] = []
@@ -581,6 +649,9 @@ func refresh_castle_event_panel() -> void:
 	castle_event_overlay.visible = false
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not info_popup_overlay.visible and not rumor_overlay.visible and not castle_event_overlay.visible and not opening_active:
+			select_hub_target("")
 	if event.is_action_pressed("ui_cancel") and info_popup_overlay.visible and not opening_active:
 		_on_close_info_popup_pressed()
 		get_viewport().set_input_as_handled()
