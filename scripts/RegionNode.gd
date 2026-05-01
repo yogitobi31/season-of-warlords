@@ -22,6 +22,7 @@ var is_hovered: bool = false
 var marker_panel: Panel
 var name_label: Label
 var rumor_label: Label
+var symbol_label: Label
 
 func _ready() -> void:
 	custom_minimum_size = CLICK_SIZE
@@ -71,6 +72,17 @@ func _setup_children() -> void:
 		name_label.add_theme_constant_override("line_spacing", 1)
 		add_child(name_label)
 
+	if symbol_label == null:
+		symbol_label = Label.new()
+		symbol_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		symbol_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		symbol_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		symbol_label.position = marker_panel.position
+		symbol_label.size = MARKER_SIZE
+		symbol_label.add_theme_font_size_override("font_size", 11)
+		symbol_label.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0))
+		add_child(symbol_label)
+
 func setup(id: String, display_name: String, faction_id: int, neighbors: Array) -> void:
 	region_id = id
 	region_name = display_name
@@ -104,7 +116,7 @@ func update_visual() -> void:
 	size = CLICK_SIZE
 	text = ""
 
-	if marker_panel == null or name_label == null or rumor_label == null:
+	if marker_panel == null or name_label == null or rumor_label == null or symbol_label == null:
 		return
 
 	var base_color: Color = Color.DIM_GRAY
@@ -117,6 +129,8 @@ func update_visual() -> void:
 
 	if danger_text == "이벤트":
 		base_color = base_color.lightened(0.22)
+	if owner_faction < 0:
+		base_color = Color(0.3, 0.3, 0.3)
 
 	var border_color: Color = Color(0.08, 0.08, 0.08)
 	var border_width: int = 1
@@ -152,6 +166,7 @@ func update_visual() -> void:
 	name_label.visible = is_hovered or is_selected or is_rumor_target
 	if name_label.visible:
 		name_label.text = region_name
+	symbol_label.text = _get_marker_symbol()
 
 	# 향후 줌 단계가 추가되면 여기에서 라벨 표시 조건을 확대/축소 비율 기반으로 분기합니다.
 
@@ -167,3 +182,14 @@ func _on_mouse_exited() -> void:
 	is_hovered = false
 	update_visual()
 	emit_signal("region_hovered", region_id, false)
+
+func _get_marker_symbol() -> String:
+	if danger_text == "이벤트":
+		return "!"
+	if owner_faction == GameState.PLAYER_FACTION:
+		return "●"
+	if owner_faction == GameState.CRIMSON_DUCHY_FACTION:
+		return "⚔"
+	if owner_faction == GameState.GREEN_MARQUIS_FACTION:
+		return "◆"
+	return "?"
