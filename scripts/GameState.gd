@@ -17,8 +17,8 @@ const FACTION_COLORS := {
 	2: Color("4caf50")
 }
 
-const COMPANION_EXP_PER_WIN := 30
-const COMPANION_LEVELUP_EXP := 100
+const COMPANION_EXP_PER_WIN: int = 30
+const COMPANION_LEVELUP_EXP: int = 100
 
 # 지역 원본 데이터 (인접 정보 포함)
 var regions: Dictionary = {}
@@ -28,8 +28,13 @@ var ownership: Dictionary = {}
 # 동료 데이터 (companion_id -> Dictionary)
 var companions: Dictionary = {}
 
+# 스토리 이벤트 데이터
+var story_events: Dictionary = {}
+var completed_story_events: Dictionary = {}
+var pending_story_event_id: String = ""
+
 # 기본 성채 데이터 (MVP)
-var fortress_data := {
+var fortress_data: Dictionary = {
 	"name": "청람 성채",
 	"level": 1,
 	"facilities": [
@@ -47,16 +52,15 @@ var last_battle_result: String = ""
 var last_battle_message: String = ""
 
 func _ready() -> void:
-	# 게임 시작 시 지역 데이터를 초기화합니다.
 	initialize_regions()
 
 func initialize_regions() -> void:
-	# RegionData가 가진 정적 데이터를 복사하여 런타임 상태를 만듭니다.
 	regions = RegionData.get_regions()
 	ownership.clear()
 	for region_id in regions.keys():
 		ownership[region_id] = regions[region_id]["owner"]
 	initialize_companions()
+	initialize_story_events()
 	clear_selection()
 	last_battle_result = ""
 	last_battle_message = ""
@@ -109,6 +113,51 @@ func initialize_companions() -> void:
 		}
 	}
 
+func initialize_story_events() -> void:
+	story_events = {
+		"recruit_garon": {
+			"event_id": "recruit_garon",
+			"region_id": "r2",
+			"title": "용병대장 가론",
+			"speaker_name": "가론",
+			"dialogue_lines": [
+				"나는 약한 군주를 따르지 않는다.",
+				"네가 이 땅을 지킬 각오가 있다면, 내 검을 빌려주겠다."
+			],
+			"choices": ["함께 싸워달라.", "백성을 지키기 위해 네 힘이 필요하다."],
+			"recruit_companion_id": "garon",
+			"completed": false
+		},
+		"recruit_elin": {
+			"event_id": "recruit_elin",
+			"region_id": "r3",
+			"title": "서리숲의 엘린",
+			"speaker_name": "엘린",
+			"dialogue_lines": [
+				"숲을 지키는 화살은 누구를 향해야 하지?",
+				"네 전쟁이 약자를 위한 것이라면, 나도 함께하겠다."
+			],
+			"choices": ["네 화살이 필요해.", "함께 숲과 사람들을 지키자."],
+			"recruit_companion_id": "elin",
+			"completed": false
+		},
+		"recruit_mira": {
+			"event_id": "recruit_mira",
+			"region_id": "r7",
+			"title": "고대 유적의 미라",
+			"speaker_name": "미라",
+			"dialogue_lines": [
+				"유적의 금기를 건드릴 용기는 있나요?",
+				"세상을 바꿀 결심이 있다면, 제 마법을 보태드릴게요."
+			],
+			"choices": ["우린 함께 바꿀 수 있어.", "네 지식과 용기가 필요해."],
+			"recruit_companion_id": "mira",
+			"completed": false
+		}
+	}
+	completed_story_events.clear()
+	pending_story_event_id = ""
+
 func clear_selection() -> void:
 	selected_region_id = ""
 	attack_region_id = ""
@@ -158,27 +207,14 @@ func get_joined_companions() -> Array:
 			result.append(data)
 	return result
 
-func get_total_companion_bonuses() -> Dictionary:
-	var bonuses := {
-		"max_hp": 0.0,
-		"attack_power": 0.0,
-		"move_speed": 0.0,
-		"attack_range": 0.0
-	}
-	for companion in get_joined_companions():
-		var bonus_type := str(companion.get("battle_bonus_type", ""))
-		if bonuses.has(bonus_type):
-			bonuses[bonus_type] += float(companion.get("battle_bonus_value", 0.0))
-	return bonuses
-
 func grant_companion_exp_on_victory() -> Array[String]:
 	var level_up_messages: Array[String] = []
 	for companion_id in companions.keys():
 		var companion: Dictionary = companions[companion_id]
 		if not companion.get("joined", false):
 			continue
-		var exp := int(companion.get("exp", 0)) + COMPANION_EXP_PER_WIN
-		var level := int(companion.get("level", 1))
+		var exp: int = int(companion.get("exp", 0)) + COMPANION_EXP_PER_WIN
+		var level: int = int(companion.get("level", 1))
 		while exp >= COMPANION_LEVELUP_EXP:
 			exp -= COMPANION_LEVELUP_EXP
 			level += 1
@@ -188,28 +224,62 @@ func grant_companion_exp_on_victory() -> Array[String]:
 		companions[companion_id] = companion
 	return level_up_messages
 
-func unlock_companions_by_region(region_id: String) -> Array[String]:
-	var join_messages: Array[String] = []
-	for companion_id in companions.keys():
-		var companion: Dictionary = companions[companion_id]
-		if companion.get("joined", false):
+func queue_story_event_by_region(region_id: String) -> void:
+	for event_id in story_events.keys():
+		var event_data: Dictionary = story_events[event_id]
+		if str(event_data.get("region_id", "")) != region_id:
 			continue
-		if str(companion.get("unlock_region_id", "")) == region_id:
-			companion["joined"] = true
-			companions[companion_id] = companion
-			join_messages.append("%s이(가) 동료로 합류했습니다!" % companion.get("name", companion_id))
-	return join_messages
+		if event_is_completed(event_id):
+			continue
+		pending_story_event_id = event_id
+		return
+
+func event_is_completed(event_id: String) -> bool:
+	if completed_story_events.get(event_id, false):
+		return true
+	if not story_events.has(event_id):
+		return true
+	var event_data: Dictionary = story_events[event_id]
+	return bool(event_data.get("completed", false))
+
+func has_pending_story_event() -> bool:
+	if pending_story_event_id == "":
+		return false
+	return not event_is_completed(pending_story_event_id)
+
+func get_pending_story_event() -> Dictionary:
+	if not has_pending_story_event():
+		return {}
+	return story_events.get(pending_story_event_id, {})
+
+func resolve_pending_story_event(_choice_index: int) -> String:
+	if not has_pending_story_event():
+		return ""
+	var event_data: Dictionary = story_events[pending_story_event_id]
+	var companion_id: String = str(event_data.get("recruit_companion_id", ""))
+	var companion_name: String = companion_id
+	if companions.has(companion_id):
+		var companion: Dictionary = companions[companion_id]
+		companion["joined"] = true
+		companions[companion_id] = companion
+		companion_name = str(companion.get("name", companion_id))
+	event_data["completed"] = true
+	story_events[pending_story_event_id] = event_data
+	completed_story_events[pending_story_event_id] = true
+	pending_story_event_id = ""
+	return "%s이(가) 동료로 합류했습니다!" % companion_name
 
 func apply_battle_result(player_won: bool) -> void:
-	var attacked_region_name := get_region_name(defense_region_id)
-	var retreat_region_name := get_region_name(attack_region_id)
+	var attacked_region_name: String = get_region_name(defense_region_id)
+	var retreat_region_name: String = get_region_name(attack_region_id)
 
-	# 플레이어 승리 시 방어 지역 소유권이 플레이어로 변경됩니다.
 	if player_won and defense_region_id != "":
 		set_region_owner(defense_region_id, PLAYER_FACTION)
 		last_battle_result = "player_win"
-		var messages := ["승리! %s를 점령했습니다." % attacked_region_name]
-		messages.append_array(unlock_companions_by_region(defense_region_id))
+		var messages: Array[String] = ["승리! %s를 점령했습니다." % attacked_region_name]
+		queue_story_event_by_region(defense_region_id)
+		if has_pending_story_event():
+			messages.append("새로운 동료 이벤트가 발생했습니다.")
 		messages.append_array(grant_companion_exp_on_victory())
 		last_battle_message = "\n".join(messages)
 	else:

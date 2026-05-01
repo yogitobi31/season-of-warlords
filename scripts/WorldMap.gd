@@ -1,25 +1,24 @@
 extends Node2D
 
-# 월드맵 MVP 흐름:
-# 1) 플레이어 소유 지역 선택
-# 2) 인접한 적 지역 선택
-# 3) 전투 씬으로 전환
-
 var region_nodes: Dictionary = {}
 var info_label: Label
 var companions_label: Label
 var fortress_button: Button
 var fortress_panel: Panel
 var fortress_label: Label
+var event_panel: Panel
+var event_title_label: Label
+var event_dialogue_label: Label
+var event_choices_container: VBoxContainer
 
 func _ready() -> void:
-	print("WorldMap ready")
 	create_ui()
 	spawn_regions()
 	refresh_regions()
 	show_default_message()
 	refresh_companions_panel()
 	refresh_fortress_panel()
+	refresh_story_event_panel()
 
 func create_ui() -> void:
 	info_label = Label.new()
@@ -52,17 +51,36 @@ func create_ui() -> void:
 	fortress_label.size = Vector2(336, 276)
 	fortress_panel.add_child(fortress_label)
 
+	event_panel = Panel.new()
+	event_panel.position = Vector2(250, 420)
+	event_panel.size = Vector2(600, 250)
+	event_panel.visible = false
+	add_child(event_panel)
+
+	event_title_label = Label.new()
+	event_title_label.position = Vector2(16, 12)
+	event_title_label.size = Vector2(560, 30)
+	event_panel.add_child(event_title_label)
+
+	event_dialogue_label = Label.new()
+	event_dialogue_label.position = Vector2(16, 46)
+	event_dialogue_label.size = Vector2(560, 110)
+	event_panel.add_child(event_dialogue_label)
+
+	event_choices_container = VBoxContainer.new()
+	event_choices_container.position = Vector2(16, 160)
+	event_choices_container.size = Vector2(560, 80)
+	event_panel.add_child(event_choices_container)
+
 func spawn_regions() -> void:
-	print("Spawning regions")
 	for region_id in GameState.regions.keys():
 		var data: Dictionary = GameState.regions[region_id]
-		var node := RegionNode.new()
+		var node: RegionNode = RegionNode.new()
 		node.position = data["pos"]
 		node.setup(region_id, data["name"], GameState.get_region_owner(region_id), data["adjacent"])
 		node.region_clicked.connect(_on_region_clicked)
 		add_child(node)
 		region_nodes[region_id] = node
-		print("Region created: ", data["name"])
 
 func refresh_regions() -> void:
 	for region_id in region_nodes.keys():
@@ -72,7 +90,7 @@ func refresh_regions() -> void:
 		node.set_attackable(_is_attackable_from_selection(region_id))
 
 func refresh_companions_panel() -> void:
-	var lines := ["동료"]
+	var lines: Array[String] = ["동료"]
 	for companion in GameState.get_companions_list():
 		if companion.get("joined", false):
 			lines.append("%s Lv.%d EXP %d/100" % [
@@ -98,17 +116,53 @@ func refresh_fortress_panel() -> void:
 	fortress_label.text = "\n".join(lines)
 
 func show_default_message() -> void:
-	var result_text := ""
+	var result_text: String = ""
 	if GameState.last_battle_message != "":
 		result_text = "직전 전투 결과:\n%s\n\n" % GameState.last_battle_message
 	info_label.text = result_text + "청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 
+func refresh_story_event_panel() -> void:
+	for child in event_choices_container.get_children():
+		child.queue_free()
+
+	if not GameState.has_pending_story_event():
+		event_panel.visible = false
+		return
+
+	var event_data: Dictionary = GameState.get_pending_story_event()
+	event_title_label.text = "[%s]" % str(event_data.get("title", "이벤트"))
+	var speaker_name: String = str(event_data.get("speaker_name", "???"))
+	var dialogue_lines: Array = event_data.get("dialogue_lines", [])
+	var dialogue_text: String = "%s:\n" % speaker_name
+	for line in dialogue_lines:
+		dialogue_text += "\"%s\"\n" % str(line)
+	event_dialogue_label.text = dialogue_text.strip_edges()
+
+	var choices: Array = event_data.get("choices", [])
+	for i: int in range(choices.size()):
+		var choice_button: Button = Button.new()
+		choice_button.text = "[%s]" % str(choices[i])
+		choice_button.pressed.connect(_on_story_choice_selected.bind(i))
+		event_choices_container.add_child(choice_button)
+	event_panel.visible = true
+
+func _on_story_choice_selected(choice_index: int) -> void:
+	var recruit_message: String = GameState.resolve_pending_story_event(choice_index)
+	if recruit_message != "":
+		GameState.last_battle_message = recruit_message
+		info_label.text = recruit_message
+	refresh_companions_panel()
+	refresh_fortress_panel()
+	refresh_story_event_panel()
+
 func _on_region_clicked(region_id: String) -> void:
-	print("WorldMap received region click: ", region_id)
-	var region_owner := GameState.get_region_owner(region_id)
+	if GameState.has_pending_story_event():
+		info_label.text = "진행 중인 동료 이벤트를 먼저 선택하세요."
+		return
+
+	var region_owner: int = GameState.get_region_owner(region_id)
 
 	if GameState.selected_region_id == "":
-		# 1단계: 플레이어 소유 지역만 시작점으로 선택 가능
 		if region_owner != GameState.PLAYER_FACTION:
 			info_label.text = "먼저 청람 왕국 소유 지역을 선택하세요."
 			refresh_regions()
@@ -118,27 +172,22 @@ func _on_region_clicked(region_id: String) -> void:
 		refresh_regions()
 		return
 
-	# 이미 시작 지역을 선택한 경우: 같은 지역을 다시 누르면 선택 해제
 	if region_id == GameState.selected_region_id:
 		GameState.clear_selection()
 		show_default_message()
 		refresh_regions()
 		return
 
-	# 2단계: 인접 체크
 	if not GameState.is_adjacent(GameState.selected_region_id, region_id):
 		info_label.text = "인접하지 않은 지역입니다. 다른 지역을 선택하세요."
 		refresh_regions()
 		return
 
-	# 3단계: 적 지역 체크
 	if region_owner == GameState.PLAYER_FACTION:
 		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요."
 		refresh_regions()
 		return
 
-	# 전투 진입 정보 설정 후 전투 씬 전환
-	print("Starting battle from ", GameState.selected_region_id, " to ", region_id)
 	GameState.set_battle_context(GameState.selected_region_id, region_id)
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
