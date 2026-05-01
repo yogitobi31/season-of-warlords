@@ -1,7 +1,7 @@
 extends Node2D
 
 const OBJECTIVE_PANEL_POS: Vector2 = Vector2(30, 35)
-const OBJECTIVE_PANEL_SIZE: Vector2 = Vector2(300, 150)
+const OBJECTIVE_PANEL_SIZE: Vector2 = Vector2(420, 170)
 const DETAIL_PANEL_POS: Vector2 = Vector2(935, 35)
 const DETAIL_PANEL_SIZE: Vector2 = Vector2(320, 350)
 const COMPANION_PANEL_POS: Vector2 = Vector2(935, 400)
@@ -32,6 +32,9 @@ const REGION_LAYOUT: Dictionary = {
 
 var region_nodes: Dictionary = {}
 var info_label: Label
+var resource_label: Label
+var help_label: Label
+var status_label: Label
 var region_detail_label: Label
 var companions_label: Label
 var fortress_button: Button
@@ -69,9 +72,25 @@ func create_ui() -> void:
 
 	info_label = Label.new()
 	info_label.position = Vector2(12, 10)
-	info_label.size = Vector2(276, 120)
-	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info_label.size = Vector2(396, 26)
 	objective_panel.add_child(info_label)
+
+	resource_label = Label.new()
+	resource_label.position = Vector2(12, 38)
+	resource_label.size = Vector2(396, 24)
+	objective_panel.add_child(resource_label)
+
+	help_label = Label.new()
+	help_label.position = Vector2(12, 64)
+	help_label.size = Vector2(396, 44)
+	help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective_panel.add_child(help_label)
+
+	status_label = Label.new()
+	status_label.position = Vector2(12, 112)
+	status_label.size = Vector2(396, 46)
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective_panel.add_child(status_label)
 
 	var region_panel: Panel = Panel.new()
 	region_panel.position = DETAIL_PANEL_POS
@@ -88,7 +107,7 @@ func create_ui() -> void:
 	region_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	region_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	region_detail_label.add_theme_constant_override("line_spacing", 3)
-	region_detail_label.text = "지역을 선택하면 상세 정보가 표시됩니다."
+	region_detail_label.text = "지역을 선택하세요."
 	region_scroll.add_child(region_detail_label)
 
 	var status_panel: Panel = Panel.new()
@@ -244,23 +263,19 @@ func refresh_fortress_panel() -> void:
 	fortress_label.text = "\n".join(lines)
 
 func show_default_message() -> void:
+	info_label.text = GameState.get_current_objective_text()
+	resource_label.text = GameState.get_resource_summary_text().replace(" / ", " | ")
+	help_label.text = "지역을 선택하면 오른쪽에 자세한 정보가 표시됩니다.\n조사 지역은 소유권이 바뀌지 않고 사건만 해결됩니다."
 	var lines: Array[String] = []
 	if GameState.last_battle_message != "":
-		lines.append("직전 전투:")
-		lines.append(GameState.last_battle_message)
-		lines.append("")
+		lines.append("최근 결과: %s" % GameState.last_battle_message)
 	if GameState.active_rumor_id != "":
 		var active_rumor: Dictionary = GameState.get_active_rumor()
 		if not active_rumor.is_empty():
-			lines.append("현재 소문:")
-			lines.append(str(active_rumor.get("title", "")))
-			lines.append("")
-	lines.append("현재 목표:")
-	lines.append(_get_current_goal_text())
-	lines.append("조작:")
-	lines.append("청람 지역 선택 → 인접 지역 선택")
-	info_label.text = "\n".join(lines)
-
+			lines.append("추적 소문: %s" % str(active_rumor.get("title", "")))
+	if lines.is_empty():
+		lines.append("지역을 선택하세요.")
+	status_label.text = "\n".join(lines)
 func refresh_story_event_panel() -> void:
 	for child in event_choices_container.get_children():
 		child.queue_free()
@@ -356,7 +371,7 @@ func _on_story_result_confirmed() -> void:
 func _on_region_hovered(region_id: String, active: bool) -> void:
 	if active:
 		var region_data: Dictionary = GameState.regions.get(region_id, {})
-		info_label.text = "%s / 위험도: %s / 클릭하면 상세 정보 표시" % [
+		status_label.text = "%s / 위험도: %s / 클릭하면 상세 정보 표시" % [
 			GameState.get_region_name(region_id),
 			str(region_data.get("danger", "보통"))
 		]
@@ -387,7 +402,7 @@ func _on_region_clicked(region_id: String) -> void:
 	if suggested_use_text != "":
 		select_hint += "\n활용 팁: %s" % suggested_use_text
 	if GameState.has_pending_story_event():
-		info_label.text = "진행 중인 동료 이벤트를 먼저 선택하세요."
+		status_label.text = "진행 중인 동료 이벤트를 먼저 선택하세요."
 		refresh_regions()
 		return
 
@@ -402,7 +417,7 @@ func _on_region_clicked(region_id: String) -> void:
 			_update_event_action_button(region_id)
 			return
 		if region_owner != GameState.PLAYER_FACTION:
-			info_label.text = "먼저 청람 왕국 소유 지역을 선택하세요."
+			status_label.text = "먼저 청람 왕국 소유 지역을 선택하세요."
 			refresh_regions()
 			return
 
@@ -417,7 +432,7 @@ func _on_region_clicked(region_id: String) -> void:
 		return
 
 	if not GameState.is_adjacent(GameState.selected_region_id, region_id):
-		info_label.text = "인접하지 않은 지역입니다. 다른 지역을 선택하세요."
+		status_label.text = "인접하지 않은 지역입니다. 다른 지역을 선택하세요."
 		refresh_regions()
 		return
 
@@ -433,6 +448,10 @@ func _on_region_clicked(region_id: String) -> void:
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 func refresh_region_detail_panel(region_id: String) -> void:
+	if region_id == "" or not GameState.regions.has(region_id):
+		region_detail_label.text = "지역을 선택하세요."
+		_update_event_action_button("")
+		return
 	var region_data: Dictionary = GameState.regions.get(region_id, {})
 	var enemy_preview: String = _format_expected_enemy_classes(region_data)
 	var reward_text: String = GameState.format_reward_text(region_data.get("reward", {}))
@@ -455,13 +474,7 @@ func _is_attackable_from_selection(region_id: String) -> bool:
 
 
 func _get_current_goal_text() -> String:
-	if not GameState.has_companion_joined("garon"):
-		return "가론을 찾기 전, 주변 지역에서 병력을 성장시키세요."
-	if not GameState.has_companion_joined("elin"):
-		return "서리숲 관문의 숲의 사수를 찾아 전력을 보강하세요."
-	if not GameState.has_companion_joined("mira"):
-		return "고대 유적지의 견습 마법사를 찾아 마법 전력을 확보하세요."
-	return "성채를 정비하고 다음 원정을 준비하세요."
+	return GameState.get_current_objective_text()
 
 func _format_reward_preview(region_data: Dictionary) -> String:
 	var reward_data: Dictionary = region_data.get("reward", {})
@@ -520,7 +533,7 @@ func _start_region_action(region_id: String) -> void:
 		return
 	var action_type: String = GameState.get_region_action_type(region_id)
 	GameState.set_expedition_context(region_id, region_id, action_type)
-	info_label.text = "지역 이벤트 시작: %s" % GameState.get_region_name(region_id)
+	status_label.text = "지역 이벤트 시작: %s" % GameState.get_region_name(region_id)
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 func _update_event_action_button(region_id: String) -> void:

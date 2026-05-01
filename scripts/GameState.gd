@@ -665,6 +665,26 @@ func get_resource_amount(resource_id: String) -> int:
 		_:
 			return 0
 
+
+func get_current_objective_text() -> String:
+	if not has_companion_joined("garon"):
+		if active_rumor_id == "rumor_garon":
+			return "현재 목표: 북부 감시요새로 출정하여 가론의 흔적을 조사하세요."
+		return "현재 목표: 소문 게시판에서 첫 소문을 확인하세요."
+	if not has_companion_joined("elin"):
+		if pending_castle_event_id == "garon_arrival":
+			return "현재 목표: 성채로 돌아와 새 소문을 확인하세요."
+		if active_rumor_id == "rumor_elin":
+			return "현재 목표: 서리숲 관문으로 출정하세요."
+		return "현재 목표: 성채로 돌아와 새 소문을 확인하세요."
+	if not has_companion_joined("mira"):
+		if pending_castle_event_id == "elin_arrival":
+			return "현재 목표: 성채로 돌아와 새 소문을 확인하세요."
+		if active_rumor_id == "rumor_mira":
+			return "현재 목표: 고대 유적지의 마력 흔적을 조사하세요."
+		return "현재 목표: 고대 유적지의 마력 흔적을 조사하세요."
+	return "현재 목표: 성채를 정비하고 다음 소문을 기다리세요."
+
 func get_resource_summary_text() -> String:
 	var parts: Array[String] = []
 	var ordered_ids: Array[String] = ["gold", "supplies", "materials", "renown"]

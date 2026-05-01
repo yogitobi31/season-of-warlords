@@ -42,6 +42,11 @@ extends Control
 @onready var castle_event_dialogue_label: Label = $UILayer/CastleEventOverlay/CastleEventPanel/Margin/VBox/DialogueLabel
 @onready var castle_event_confirm_button: Button = $UILayer/CastleEventOverlay/CastleEventPanel/Margin/VBox/ConfirmButton
 
+var hub_objective_label: Label
+var hub_resource_label: Label
+var hub_help_label: Label
+var hub_action_panel: Panel
+
 var rumor_panel_rumor_id: String = ""
 var opening_lines: Array[String] = []
 var opening_index: int = 0
@@ -60,6 +65,8 @@ func _ready() -> void:
 	refresh_courtyard_people()
 	GameState.update_pending_castle_event()
 	refresh_castle_event_panel()
+	build_hub_layout()
+	refresh_hub_header()
 
 	gate_button.pressed.connect(_on_expedition_pressed)
 	rumor_board_button.pressed.connect(_on_rumor_pressed)
@@ -407,6 +414,62 @@ func build_castle_people_text() -> String:
 		lines.append("- %s" % str(companion_data.get("name", "?")))
 	return "\n".join(lines)
 
+
+func build_hub_layout() -> void:
+	hub_action_panel = Panel.new()
+	hub_action_panel.position = Vector2(930, 330)
+	hub_action_panel.size = Vector2(300, 250)
+	$SceneRoot.add_child(hub_action_panel)
+
+	var action_title: Label = Label.new()
+	action_title.position = Vector2(16, 12)
+	action_title.size = Vector2(268, 24)
+	action_title.text = "주요 행동"
+	hub_action_panel.add_child(action_title)
+
+	var button_box: VBoxContainer = VBoxContainer.new()
+	button_box.position = Vector2(16, 40)
+	button_box.size = Vector2(268, 170)
+	button_box.add_theme_constant_override("separation", 8)
+	hub_action_panel.add_child(button_box)
+
+	_configure_main_action_button(rumor_board_button, "소문 게시판", button_box)
+	_configure_main_action_button(gate_button, "월드맵 / 출정", button_box)
+	_configure_main_action_button(training_dummy_button, "훈련장", button_box)
+	_configure_main_action_button(manage_button, "성채 관리", button_box)
+
+	hub_objective_label = Label.new()
+	hub_objective_label.position = Vector2(22, 14)
+	hub_objective_label.size = Vector2(780, 26)
+	$UILayer.add_child(hub_objective_label)
+
+	hub_resource_label = Label.new()
+	hub_resource_label.position = Vector2(22, 40)
+	hub_resource_label.size = Vector2(780, 24)
+	$UILayer.add_child(hub_resource_label)
+
+	hub_help_label = Label.new()
+	hub_help_label.position = Vector2(22, 66)
+	hub_help_label.size = Vector2(840, 40)
+	hub_help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	$UILayer.add_child(hub_help_label)
+
+func _configure_main_action_button(button: Button, button_text: String, parent_box: VBoxContainer) -> void:
+	if button.get_parent() != null:
+		button.get_parent().remove_child(button)
+	parent_box.add_child(button)
+	button.text = button_text
+	button.custom_minimum_size = Vector2(268, 36)
+	button.flat = false
+	button.disabled = false
+
+func refresh_hub_header() -> void:
+	if hub_objective_label == null:
+		return
+	hub_objective_label.text = GameState.get_current_objective_text()
+	hub_resource_label.text = GameState.get_resource_summary_text().replace(" / ", " | ")
+	hub_help_label.text = "소문을 확인하고 출정할 지역을 선택하세요.\n동료가 합류하면 성채에 표시됩니다."
+
 func refresh_quest_log() -> void:
 	if not GameState.has_companion_joined("garon"):
 		quest_log_label.text = "현재 목표:\n북부 감시요새의 가론을 찾아라"
@@ -428,6 +491,7 @@ func refresh_status_message() -> void:
 		status_label.text = "고대 유적지의 마력 흔적을 조사 중입니다."
 		return
 	status_label.text = ""
+	refresh_hub_header()
 
 func refresh_rumor_panel() -> void:
 	var available_ids: Array[String] = GameState.get_available_rumor_ids()
@@ -534,6 +598,7 @@ func _on_castle_event_confirm_pressed() -> void:
 	refresh_rumor_panel()
 	refresh_quest_log()
 	refresh_courtyard_people()
+	refresh_hub_header()
 
 func setup_opening_lines() -> void:
 	opening_lines = [
