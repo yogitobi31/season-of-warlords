@@ -452,6 +452,7 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 	lines.append("[지역 정보]")
 	lines.append("지역: %s" % GameState.get_region_name(region_id))
 	lines.append("세력: %s" % GameState.FACTION_NAMES.get(GameState.get_region_owner(region_id), "미상"))
+	lines.append("이벤트 상태: %s" % ("해결" if GameState.is_region_event_resolved(region_id) else "미해결"))
 	lines.append("위험도: %s" % str(region_data.get("danger", "보통")))
 	lines.append("")
 	lines.append("[가능 행동]")
@@ -461,7 +462,7 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 	lines.append("전투 유형: %s" % str(region_data.get("encounter_type", "미상")))
 	lines.append("예상 적: %s" % enemy_preview)
 	lines.append("")
-	lines.append("[사건]")
+	lines.append("[사건/조사]")
 	lines.append(str(region_data.get("encounter_flavor", "특이 사항이 없습니다.")))
 	lines.append("특수 규칙: %s" % str(region_data.get("special_rule", "일반 교전")))
 	lines.append("")
@@ -508,7 +509,7 @@ func _update_event_action_button(region_id: String) -> void:
 	var action_type: String = GameState.get_region_action_type(region_id)
 	event_action_button.visible = true
 	event_action_button.disabled = false
-	event_action_button.text = "조사 시작" if action_type == "exploration" else "이벤트 진행"
+	event_action_button.text = "조사/탐사 시작" if action_type == "exploration" else "이벤트 진행"
 	event_action_button.set_meta("region_id", region_id)
 
 func _on_event_action_button_pressed() -> void:

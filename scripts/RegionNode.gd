@@ -151,10 +151,7 @@ func update_visual() -> void:
 	rumor_label.visible = is_rumor_target
 	name_label.visible = is_hovered or is_selected or is_rumor_target
 	if name_label.visible:
-		var label_text: String = region_name
-		if danger_text != "":
-			label_text += "\n위험: %s" % danger_text
-		name_label.text = label_text
+		name_label.text = region_name
 
 	# 향후 줌 단계가 추가되면 여기에서 라벨 표시 조건을 확대/축소 비율 기반으로 분기합니다.
 
