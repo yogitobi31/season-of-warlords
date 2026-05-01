@@ -11,139 +11,344 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 24
+color = Color(0.08, 0.11, 0.16, 1)
+
+[node name="MainMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 36
 theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
+theme_override_constants/margin_right = 36
 theme_override_constants/margin_bottom = 24
 
-[node name="RootVBox" type="VBoxContainer" parent="Margin"]
+[node name="MainVBox" type="VBoxContainer" parent="MainMargin"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="TitleLabel" type="Label" parent="Margin/RootVBox"]
+[node name="TitlePanel" type="Panel" parent="MainMargin/MainVBox"]
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 42
+
+[node name="TitleLabel" type="Label" parent="MainMargin/MainVBox/TitlePanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -115.0
+offset_top = -22.0
+offset_right = 115.0
+offset_bottom = 22.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
 text = "청람 성채"
+horizontal_alignment = 1
 
-[node name="IntroLabel" type="Label" parent="Margin/RootVBox"]
+[node name="TopHBox" type="HBoxContainer" parent="MainMargin/MainVBox"]
+custom_minimum_size = Vector2(0, 240)
 layout_mode = 2
-text = "전란의 계절이 다가오고 있다. 청람의 깃발 아래, 흩어진 사람들을 모아 새로운 세력을 일으켜야 한다."
-autowrap_mode = 3
-
-[node name="LeonPanel" type="Panel" parent="Margin/RootVBox"]
-custom_minimum_size = Vector2(0, 120)
-layout_mode = 2
-
-[node name="LeonDialogue" type="Label" parent="Margin/RootVBox/LeonPanel"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 12.0
-offset_right = 1100.0
-offset_bottom = 106.0
-text = "주군, 성채는 낡았고 병사들은 지쳤습니다.\n하지만 아직 깃발은 내려가지 않았습니다.\n명령만 내려주십시오. 저는 끝까지 따르겠습니다."
-autowrap_mode = 3
-
-[node name="InfoHBox" type="HBoxContainer" parent="Margin/RootVBox"]
-layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 
-[node name="CompanionsPanel" type="Panel" parent="Margin/RootVBox/InfoHBox"]
-custom_minimum_size = Vector2(0, 240)
+[node name="DialoguePanel" type="Panel" parent="MainMargin/MainVBox/TopHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CompanionsLabel" type="Label" parent="Margin/RootVBox/InfoHBox/CompanionsPanel"]
-layout_mode = 0
+[node name="DialogueVBox" type="VBoxContainer" parent="MainMargin/MainVBox/TopHBox/DialoguePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="LeonNameLabel" type="Label" parent="MainMargin/MainVBox/TopHBox/DialoguePanel/DialogueVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "레온"
+
+[node name="DialogueHBox" type="HBoxContainer" parent="MainMargin/MainVBox/TopHBox/DialoguePanel/DialogueVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="LeonPortraitPlaceholder" type="ColorRect" parent="MainMargin/MainVBox/TopHBox/DialoguePanel/DialogueVBox/DialogueHBox"]
+custom_minimum_size = Vector2(110, 110)
+layout_mode = 2
+color = Color(0.21, 0.26, 0.33, 1)
+
+[node name="LeonPortraitLabel" type="Label" parent="MainMargin/MainVBox/TopHBox/DialoguePanel/DialogueVBox/DialogueHBox/LeonPortraitPlaceholder"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -20.5
+offset_right = 50.0
+offset_bottom = 20.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "[레온\n초상 자리]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LeonDialogue" type="Label" parent="MainMargin/MainVBox/TopHBox/DialoguePanel/DialogueVBox/DialogueHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "\"주군, 북부 감시요새에 이상한 소문이 돌고 있습니다.\""
+autowrap_mode = 3
+
+[node name="SideInfoVBox" type="VBoxContainer" parent="MainMargin/MainVBox/TopHBox"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="CompanionsPanel" type="Panel" parent="MainMargin/MainVBox/TopHBox/SideInfoVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CompanionsLabel" type="Label" parent="MainMargin/MainVBox/TopHBox/SideInfoVBox/CompanionsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = 12.0
-offset_right = 560.0
-offset_bottom = 220.0
+offset_top = 10.0
+offset_right = -12.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 autowrap_mode = 3
 text = "동료 목록 로딩 중..."
 
-[node name="FacilitiesPanel" type="Panel" parent="Margin/RootVBox/InfoHBox"]
-custom_minimum_size = Vector2(0, 240)
+[node name="FacilitiesPanel" type="Panel" parent="MainMargin/MainVBox/TopHBox/SideInfoVBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="FacilitiesLabel" type="Label" parent="Margin/RootVBox/InfoHBox/FacilitiesPanel"]
-layout_mode = 0
+[node name="FacilitiesLabel" type="Label" parent="MainMargin/MainVBox/TopHBox/SideInfoVBox/FacilitiesPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = 12.0
-offset_right = 560.0
-offset_bottom = 220.0
+offset_top = 10.0
+offset_right = -12.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 autowrap_mode = 3
 text = "시설 목록 로딩 중..."
 
-[node name="StatusLabel" type="Label" parent="Margin/RootVBox"]
+[node name="BottomPanel" type="Panel" parent="MainMargin/MainVBox"]
+custom_minimum_size = Vector2(0, 126)
+layout_mode = 2
+
+[node name="BottomMargin" type="MarginContainer" parent="MainMargin/MainVBox/BottomPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BottomVBox" type="VBoxContainer" parent="MainMargin/MainVBox/BottomPanel/BottomMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StatusLabel" type="Label" parent="MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox"]
 layout_mode = 2
 text = ""
+autowrap_mode = 3
 
-[node name="ButtonsHBox" type="HBoxContainer" parent="Margin/RootVBox"]
+[node name="ButtonsHBox" type="HBoxContainer" parent="MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
 
-[node name="ExpeditionButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
+[node name="ExpeditionButton" type="Button" parent="MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "출정하기"
 
-[node name="RumorButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
+[node name="RumorButton" type="Button" parent="MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "소문 듣기"
 
-[node name="CompanionButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
+[node name="CompanionButton" type="Button" parent="MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "동료 보기"
 
-[node name="ManageButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
+[node name="ManageButton" type="Button" parent="MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "성채 관리"
 
-[node name="RestButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
+[node name="RestButton" type="Button" parent="MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "휴식하기"
 
-[node name="RumorPanel" type="Panel" parent="Margin/RootVBox"]
+[node name="RumorOverlay" type="Control" parent="."]
 visible = false
-custom_minimum_size = Vector2(0, 220)
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
-[node name="RumorTitleLabel" type="Label" parent="Margin/RootVBox/RumorPanel"]
-layout_mode = 0
+[node name="Dim" type="ColorRect" parent="RumorOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="Center" type="CenterContainer" parent="RumorOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 220.0
+offset_top = 110.0
+offset_right = -220.0
+offset_bottom = -110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RumorPanel" type="Panel" parent="RumorOverlay/Center"]
+custom_minimum_size = Vector2(840, 500)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="RumorMargin" type="MarginContainer" parent="RumorOverlay/Center/RumorPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RumorVBox" type="VBoxContainer" parent="RumorOverlay/Center/RumorPanel/RumorMargin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="RumorHeaderLabel" type="Label" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "소문"
+
+[node name="RumorCardPanel" type="Panel" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RumorCardMargin" type="MarginContainer" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = 10.0
-offset_right = 1100.0
-offset_bottom = 42.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RumorCardVBox" type="VBoxContainer" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="RumorTitleLabel" type="Label" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
 text = "북부 감시요새의 용병대장"
 
-[node name="RumorBodyLabel" type="Label" parent="Margin/RootVBox/RumorPanel"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 48.0
-offset_right = 1100.0
-offset_bottom = 166.0
-autowrap_mode = 3
+[node name="RumorContentHBox" type="HBoxContainer" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="GaronPortraitPlaceholder" type="ColorRect" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox/RumorContentHBox"]
+custom_minimum_size = Vector2(130, 140)
+layout_mode = 2
+color = Color(0.25, 0.21, 0.18, 1)
+
+[node name="GaronPortraitLabel" type="Label" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox/RumorContentHBox/GaronPortraitPlaceholder"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -20.5
+offset_right = 50.0
+offset_bottom = 20.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "[가론\n초상 자리]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RumorScroll" type="ScrollContainer" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox/RumorContentHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RumorBodyLabel" type="Label" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox/RumorContentHBox/RumorScroll"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_horizontal = 3
 text = ""
+autowrap_mode = 3
 
-[node name="RumorButtonsHBox" type="HBoxContainer" parent="Margin/RootVBox/RumorPanel"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 176.0
-offset_right = 520.0
-offset_bottom = 212.0
+[node name="RumorButtonsHBox" type="HBoxContainer" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox"]
+layout_mode = 2
 theme_override_constants/separation = 12
+alignment = 2
 
-[node name="TrackRumorButton" type="Button" parent="Margin/RootVBox/RumorPanel/RumorButtonsHBox"]
+[node name="TrackRumorButton" type="Button" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorButtonsHBox"]
+custom_minimum_size = Vector2(260, 44)
 layout_mode = 2
 text = "이 소문을 추적한다"
 
-[node name="CloseRumorButton" type="Button" parent="Margin/RootVBox/RumorPanel/RumorButtonsHBox"]
+[node name="CloseRumorButton" type="Button" parent="RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorButtonsHBox"]
+custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 text = "닫기"
