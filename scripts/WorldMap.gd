@@ -7,6 +7,7 @@ var fortress_button: Button
 var fortress_panel: Panel
 var fortress_label: Label
 var return_button: Button
+var event_overlay: ColorRect
 var event_panel: Panel
 var event_title_label: Label
 var event_speaker_label: Label
@@ -60,30 +61,43 @@ func create_ui() -> void:
 	fortress_label.size = Vector2(336, 276)
 	fortress_panel.add_child(fortress_label)
 
+	# StoryEvent UI는 지역 버튼들보다 항상 위에 떠야 하므로 overlay/panel에 높은 z_index를 줍니다.
+	event_overlay = ColorRect.new()
+	event_overlay.position = Vector2(0, 0)
+	event_overlay.size = Vector2(1280, 720)
+	event_overlay.color = Color(0, 0, 0, 0.45)
+	event_overlay.visible = false
+	event_overlay.z_index = 90
+	event_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(event_overlay)
+
 	event_panel = Panel.new()
-	event_panel.position = Vector2(350, 180)
-	event_panel.size = Vector2(620, 320)
+	event_panel.position = Vector2(330, 130)
+	event_panel.size = Vector2(660, 430)
 	event_panel.visible = false
+	event_panel.z_index = 100
+	event_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(event_panel)
 
 	event_title_label = Label.new()
-	event_title_label.position = Vector2(16, 12)
-	event_title_label.size = Vector2(588, 30)
+	event_title_label.position = Vector2(20, 16)
+	event_title_label.size = Vector2(620, 34)
 	event_panel.add_child(event_title_label)
 
 	event_speaker_label = Label.new()
-	event_speaker_label.position = Vector2(16, 46)
-	event_speaker_label.size = Vector2(588, 24)
+	event_speaker_label.position = Vector2(20, 54)
+	event_speaker_label.size = Vector2(620, 28)
 	event_panel.add_child(event_speaker_label)
 
 	event_dialogue_label = Label.new()
-	event_dialogue_label.position = Vector2(16, 74)
-	event_dialogue_label.size = Vector2(588, 130)
+	event_dialogue_label.position = Vector2(20, 92)
+	event_dialogue_label.size = Vector2(620, 190)
+	event_dialogue_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	event_panel.add_child(event_dialogue_label)
 
 	event_choices_container = VBoxContainer.new()
-	event_choices_container.position = Vector2(16, 216)
-	event_choices_container.size = Vector2(588, 90)
+	event_choices_container.position = Vector2(20, 300)
+	event_choices_container.size = Vector2(620, 110)
 	event_panel.add_child(event_choices_container)
 
 func spawn_regions() -> void:
@@ -155,6 +169,7 @@ func refresh_story_event_panel() -> void:
 
 	if not GameState.has_pending_story_event():
 		event_panel.visible = false
+		event_overlay.visible = false
 		return
 
 	var event_data: Dictionary = GameState.get_pending_story_event()
@@ -173,9 +188,14 @@ func refresh_story_event_panel() -> void:
 	for i: int in range(choices.size()):
 		var choice_button: Button = Button.new()
 		choice_button.text = "[%s]" % str(choices[i])
+		choice_button.custom_minimum_size = Vector2(620, 38)
 		choice_button.pressed.connect(_on_story_choice_selected.bind(i))
 		event_choices_container.add_child(choice_button)
+	event_overlay.visible = true
 	event_panel.visible = true
+	# 지역 버튼들이 나중에 add_child 되어도 이벤트 UI가 반드시 맨 위에 오도록 순서를 다시 올립니다.
+	move_child(event_overlay, get_child_count() - 1)
+	move_child(event_panel, get_child_count() - 1)
 
 func _on_story_choice_selected(choice_index: int) -> void:
 	var recruit_message: String = GameState.resolve_pending_story_event(choice_index)
