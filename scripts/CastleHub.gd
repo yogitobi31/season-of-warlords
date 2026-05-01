@@ -1,18 +1,18 @@
 extends Control
 
-@onready var companions_label: Label = $Margin/RootVBox/InfoHBox/CompanionsPanel/CompanionsLabel
-@onready var facilities_label: Label = $Margin/RootVBox/InfoHBox/FacilitiesPanel/FacilitiesLabel
-@onready var status_label: Label = $Margin/RootVBox/StatusLabel
-@onready var expedition_button: Button = $Margin/RootVBox/ButtonsHBox/ExpeditionButton
-@onready var rumor_button: Button = $Margin/RootVBox/ButtonsHBox/RumorButton
-@onready var companion_button: Button = $Margin/RootVBox/ButtonsHBox/CompanionButton
-@onready var manage_button: Button = $Margin/RootVBox/ButtonsHBox/ManageButton
-@onready var rest_button: Button = $Margin/RootVBox/ButtonsHBox/RestButton
-@onready var rumor_panel: Panel = $Margin/RootVBox/RumorPanel
-@onready var rumor_title_label: Label = $Margin/RootVBox/RumorPanel/RumorTitleLabel
-@onready var rumor_body_label: Label = $Margin/RootVBox/RumorPanel/RumorBodyLabel
-@onready var rumor_track_button: Button = $Margin/RootVBox/RumorPanel/RumorButtonsHBox/TrackRumorButton
-@onready var rumor_close_button: Button = $Margin/RootVBox/RumorPanel/RumorButtonsHBox/CloseRumorButton
+@onready var companions_label: Label = $MainMargin/MainVBox/TopHBox/SideInfoVBox/CompanionsPanel/CompanionsLabel
+@onready var facilities_label: Label = $MainMargin/MainVBox/TopHBox/SideInfoVBox/FacilitiesPanel/FacilitiesLabel
+@onready var status_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/StatusLabel
+@onready var expedition_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/ExpeditionButton
+@onready var rumor_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/RumorButton
+@onready var companion_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/CompanionButton
+@onready var manage_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/ManageButton
+@onready var rest_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/RestButton
+@onready var rumor_overlay: Control = $RumorOverlay
+@onready var rumor_title_label: Label = $RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox/RumorTitleLabel
+@onready var rumor_body_label: Label = $RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorCardPanel/RumorCardMargin/RumorCardVBox/RumorContentHBox/RumorScroll/RumorBodyLabel
+@onready var rumor_track_button: Button = $RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorButtonsHBox/TrackRumorButton
+@onready var rumor_close_button: Button = $RumorOverlay/Center/RumorPanel/RumorMargin/RumorVBox/RumorButtonsHBox/CloseRumorButton
 
 func _ready() -> void:
 	refresh_companions()
@@ -76,15 +76,15 @@ func _on_expedition_pressed() -> void:
 
 func _on_rumor_pressed() -> void:
 	refresh_rumor_panel()
-	rumor_panel.visible = true
+	rumor_overlay.visible = true
 
 func _on_track_rumor_pressed() -> void:
 	if GameState.track_rumor("rumor_garon"):
 		status_label.text = "가론의 소문을 추적합니다. 북부 감시요새로 출정하세요."
-	rumor_panel.visible = false
+	rumor_overlay.visible = false
 
 func _on_close_rumor_pressed() -> void:
-	rumor_panel.visible = false
+	rumor_overlay.visible = false
 
 func _on_coming_soon_pressed(feature_name: String) -> void:
 	status_label.text = "%s: 준비 중입니다." % feature_name
