@@ -8,6 +8,7 @@ var player_units: Array[Unit] = []
 var enemy_units: Array[Unit] = []
 var result_label: Label
 var count_label: Label
+var companions_label: Label
 var _battle_finished := false
 
 func _ready() -> void:
@@ -28,15 +29,27 @@ func create_ui() -> void:
 	count_label.text = "병력 집계 중..."
 	add_child(count_label)
 
+	companions_label = Label.new()
+	companions_label.position = Vector2(20, 108)
+	companions_label.size = Vector2(1240, 36)
+	companions_label.text = "출전 동료: 없음"
+	add_child(companions_label)
+
 func spawn_teams() -> void:
-	var player_bonuses := GameState.get_total_companion_bonuses()
+	var joined_companions: Array = GameState.get_joined_companions()
+	var deployed_companions: Array[String] = []
+	var companion_count := min(joined_companions.size(), UNITS_PER_TEAM)
+
 	for i in UNITS_PER_TEAM:
 		var p := Unit.new()
 		p.team = Unit.TEAM_PLAYER
-		p.max_hp += player_bonuses["max_hp"]
-		p.attack_power += player_bonuses["attack_power"]
-		p.move_speed += player_bonuses["move_speed"]
-		p.attack_range += player_bonuses["attack_range"]
+		if i < companion_count:
+			var companion: Dictionary = joined_companions[i]
+			p.is_companion = true
+			p.unit_name = str(companion.get("name", "동료"))
+			p.level = int(companion.get("level", 1))
+			_apply_companion_stats(p, str(companion.get("id", "")), p.level)
+			deployed_companions.append(p.unit_name)
 		p.global_position = Vector2(180 + i * 22, 170 + (i % 5) * 70)
 		add_child(p)
 		player_units.append(p)
@@ -46,6 +59,25 @@ func spawn_teams() -> void:
 		e.global_position = Vector2(1100 - i * 22, 170 + (i % 5) * 70)
 		add_child(e)
 		enemy_units.append(e)
+
+	if deployed_companions.is_empty():
+		companions_label.text = "출전 동료: 없음"
+	else:
+		companions_label.text = "출전 동료: %s" % ", ".join(deployed_companions)
+
+func _apply_companion_stats(unit: Unit, companion_id: String, level: int) -> void:
+	var level_bonus := max(level - 1, 0)
+	match companion_id:
+		"leon":
+			unit.max_hp += 40.0 + level_bonus * 6.0
+		"garon":
+			unit.attack_power += 5.0 + level_bonus * 1.2
+		"elin":
+			unit.move_speed += 40.0 + level_bonus * 4.0
+		"mira":
+			unit.attack_range += 28.0 + level_bonus * 2.5
+		_:
+			unit.max_hp += 20.0 + level_bonus * 4.0
 
 func _process(delta: float) -> void:
 	if _battle_finished:

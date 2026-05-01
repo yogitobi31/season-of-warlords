@@ -13,17 +13,33 @@ const TEAM_ENEMY := 1
 @export var attack_cooldown: float = 0.8
 @export var team: int = TEAM_PLAYER
 
+var unit_name: String = ""
+var is_companion: bool = false
+var level: int = 1
+
 var hp: float
 var _cooldown_timer: float = 0.0
 var _shape: ColorRect
+var name_label: Label
 
 func _ready() -> void:
 	hp = max_hp
 	_shape = ColorRect.new()
-	_shape.size = Vector2(16, 16)
-	_shape.position = Vector2(-8, -8)
+	var body_size := Vector2(16, 16)
+	if is_companion:
+		body_size = Vector2(24, 24)
+	_shape.size = body_size
+	_shape.position = -body_size * 0.5
 	_shape.color = Color("7CFC00") if team == TEAM_PLAYER else Color("FF7043")
 	add_child(_shape)
+
+	if is_companion and unit_name != "":
+		name_label = Label.new()
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_label.size = Vector2(160, 22)
+		name_label.position = Vector2(-80, body_size.y * 0.5 + 4)
+		name_label.text = "%s Lv.%d" % [unit_name, level]
+		add_child(name_label)
 
 func is_alive() -> bool:
 	return hp > 0.0
