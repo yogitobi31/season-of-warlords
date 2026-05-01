@@ -18,6 +18,7 @@ var fortress_button: Button
 var fortress_panel: Panel
 var fortress_label: Label
 var return_button: Button
+var event_action_button: Button
 var event_overlay: ColorRect
 var event_panel: Panel
 var event_title_label: Label
@@ -100,6 +101,14 @@ func create_ui() -> void:
 	return_button.size = Vector2(158, 40)
 	return_button.pressed.connect(_on_return_button_pressed)
 	add_child(return_button)
+
+	event_action_button = Button.new()
+	event_action_button.text = "이벤트 진행"
+	event_action_button.position = Vector2(935, 579)
+	event_action_button.size = Vector2(320, 40)
+	event_action_button.visible = false
+	event_action_button.pressed.connect(_on_event_action_button_pressed)
+	add_child(event_action_button)
 
 	fortress_panel = Panel.new()
 	fortress_panel.position = Vector2(24, 20)
@@ -365,8 +374,12 @@ func _on_region_clicked(region_id: String) -> void:
 	if GameState.selected_region_id == "":
 		if region_owner == GameState.PLAYER_FACTION:
 			GameState.selected_region_id = region_id
-			info_label.text = "선택된 지역: %s\n%s\n인접한 적 지역을 선택하세요." % [GameState.regions[region_id]["name"], select_hint]
+			if _can_start_owned_region_action(region_id):
+				info_label.text = "선택된 지역: %s\n%s\n이벤트를 진행하거나 인접한 적 지역을 선택하세요." % [GameState.regions[region_id]["name"], select_hint]
+			else:
+				info_label.text = "선택된 지역: %s\n%s\n인접한 적 지역을 선택하세요." % [GameState.regions[region_id]["name"], select_hint]
 			refresh_regions()
+			_update_event_action_button(region_id)
 			return
 		if region_owner != GameState.PLAYER_FACTION:
 			info_label.text = "먼저 청람 왕국 소유 지역을 선택하세요."
@@ -374,8 +387,12 @@ func _on_region_clicked(region_id: String) -> void:
 			return
 
 	if region_id == GameState.selected_region_id:
+		if _can_start_owned_region_action(region_id):
+			_start_region_action(region_id)
+			return
 		GameState.clear_selection()
 		show_default_message()
+		_update_event_action_button("")
 		refresh_regions()
 		return
 
@@ -386,10 +403,12 @@ func _on_region_clicked(region_id: String) -> void:
 
 	if region_owner == GameState.PLAYER_FACTION:
 		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요.\n%s" % select_hint
+		_update_event_action_button(region_id)
 		refresh_regions()
 		return
 
 	GameState.set_battle_context(GameState.selected_region_id, region_id)
+	_update_event_action_button("")
 	info_label.text = "공격 대상: %s\n%s" % [GameState.get_region_name(region_id), select_hint]
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
@@ -398,6 +417,7 @@ func refresh_region_detail_panel(region_id: String) -> void:
 	var enemy_preview: String = _format_expected_enemy_classes(region_data)
 	var reward_text: String = GameState.format_reward_text(region_data.get("reward", {}))
 	region_detail_label.text = _format_region_detail(region_id, region_data, reward_text, enemy_preview)
+	_update_event_action_button(region_id)
 
 func _on_fortress_button_pressed() -> void:
 	fortress_panel.visible = not fortress_panel.visible
@@ -434,10 +454,16 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 	lines.append("세력: %s" % GameState.FACTION_NAMES.get(GameState.get_region_owner(region_id), "미상"))
 	lines.append("위험도: %s" % str(region_data.get("danger", "보통")))
 	lines.append("")
-	lines.append("[전투 정보]")
+	lines.append("[가능 행동]")
+	lines.append("행동 유형: %s" % _get_action_type_display(str(region_data.get("action_type", "conquest"))))
+	lines.append("목표: %s" % _get_objective_type_display(str(region_data.get("objective_type", "rout"))))
 	lines.append("권장 준비: %s" % str(region_data.get("recommended", "기본 병력")))
 	lines.append("전투 유형: %s" % str(region_data.get("encounter_type", "미상")))
 	lines.append("예상 적: %s" % enemy_preview)
+	lines.append("")
+	lines.append("[사건]")
+	lines.append(str(region_data.get("encounter_flavor", "특이 사항이 없습니다.")))
+	lines.append("특수 규칙: %s" % str(region_data.get("special_rule", "일반 교전")))
 	lines.append("")
 	lines.append("[획득 보상]")
 	lines.append(reward_text.replace(" / 명성 ", "\n명성 "))
@@ -449,6 +475,53 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 		lines.append("")
 		lines.append("해금 요소: %s" % str(region_data.get("unlock_class", "")))
 	return "\n".join(lines)
+
+func _can_start_owned_region_action(region_id: String) -> bool:
+	if GameState.get_region_owner(region_id) != GameState.PLAYER_FACTION:
+		return false
+	var action_type: String = GameState.get_region_action_type(region_id)
+	if not (action_type in ["exploration", "choice", "training", "resource"]):
+		return false
+	var active_rumor: Dictionary = GameState.get_active_rumor()
+	var active_target: String = str(active_rumor.get("target_region_id", ""))
+	if active_target == region_id:
+		return true
+	return GameState.region_has_unresolved_event(region_id)
+
+func _start_region_action(region_id: String) -> void:
+	if not _can_start_owned_region_action(region_id):
+		return
+	var action_type: String = GameState.get_region_action_type(region_id)
+	GameState.set_expedition_context(region_id, region_id, action_type)
+	info_label.text = "지역 이벤트 시작: %s" % GameState.get_region_name(region_id)
+	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+func _update_event_action_button(region_id: String) -> void:
+	if region_id == "" or not GameState.regions.has(region_id):
+		event_action_button.visible = false
+		event_action_button.disabled = true
+		return
+	if not _can_start_owned_region_action(region_id):
+		event_action_button.visible = false
+		event_action_button.disabled = true
+		return
+	var action_type: String = GameState.get_region_action_type(region_id)
+	event_action_button.visible = true
+	event_action_button.disabled = false
+	event_action_button.text = "조사 시작" if action_type == "exploration" else "이벤트 진행"
+	event_action_button.set_meta("region_id", region_id)
+
+func _on_event_action_button_pressed() -> void:
+	var selected_id: String = str(event_action_button.get_meta("region_id", ""))
+	_start_region_action(selected_id)
+
+func _get_action_type_display(action_type: String) -> String:
+	var mapping: Dictionary = {"conquest": "점령", "exploration": "조사", "ambush": "매복", "choice": "선택", "training": "훈련", "resource": "자원", "defense": "방어", "rescue": "구출", "escort": "호위", "ritual": "의식"}
+	return str(mapping.get(action_type, action_type))
+
+func _get_objective_type_display(objective_type: String) -> String:
+	var mapping: Dictionary = {"rout": "적 격파", "survive": "생존", "protect": "보호", "investigate": "조사", "choice": "선택", "unlock": "해금", "boss": "보스", "resource": "자원 확보", "survive_or_rout": "생존 또는 격파"}
+	return str(mapping.get(objective_type, objective_type))
 
 func create_route_lines() -> void:
 	var line_layer: Node2D = Node2D.new()
