@@ -251,14 +251,14 @@ func grant_companion_exp_on_victory() -> Array[String]:
 		var companion: Dictionary = companions[companion_id]
 		if not companion.get("joined", false):
 			continue
-		var exp: int = int(companion.get("exp", 0)) + COMPANION_EXP_PER_WIN
-		var level: int = int(companion.get("level", 1))
-		while exp >= COMPANION_LEVELUP_EXP:
-			exp -= COMPANION_LEVELUP_EXP
-			level += 1
-			level_up_messages.append("%s 레벨 %d 달성!" % [companion.get("name", companion_id), level])
-		companion["exp"] = exp
-		companion["level"] = level
+		var current_exp: int = int(companion.get("exp", 0)) + COMPANION_EXP_PER_WIN
+		var current_level: int = int(companion.get("level", 1))
+		while current_exp >= COMPANION_LEVELUP_EXP:
+			current_exp -= COMPANION_LEVELUP_EXP
+			current_level += 1
+			level_up_messages.append("%s 레벨 %d 달성!" % [companion.get("name", companion_id), current_level])
+		companion["exp"] = current_exp
+		companion["level"] = current_level
 		companions[companion_id] = companion
 	return level_up_messages
 
