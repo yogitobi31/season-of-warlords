@@ -9,8 +9,10 @@ extends Control
 
 @onready var leon_marker: Panel = $SceneRoot/LeonMarker
 @onready var garon_marker: Panel = $SceneRoot/GaronMarker
+@onready var elin_marker: Panel = $SceneRoot/ElinMarker
 @onready var leon_button: Button = $SceneRoot/LeonMarker/LeonButton
 @onready var garon_button: Button = $SceneRoot/GaronMarker/GaronButton
+@onready var elin_button: Button = $SceneRoot/ElinMarker/ElinButton
 @onready var gate_button: Button = $SceneRoot/Gate/GateButton
 @onready var rumor_board_button: Button = $SceneRoot/RumorBoard/RumorBoardButton
 
@@ -56,6 +58,7 @@ func _ready() -> void:
 	rumor_board_button.pressed.connect(_on_rumor_pressed)
 	leon_button.pressed.connect(_on_leon_pressed)
 	garon_button.pressed.connect(_on_garon_pressed)
+	elin_button.pressed.connect(_on_elin_pressed)
 	rumor_button.pressed.connect(_on_rumor_pressed)
 	companion_button.pressed.connect(_on_companion_popup_pressed)
 	manage_button.pressed.connect(_on_manage_popup_pressed)
@@ -133,10 +136,15 @@ func build_character_markers() -> void:
 	for child: Node in garon_marker.get_children():
 		if child != garon_button:
 			child.queue_free()
+	for child: Node in elin_marker.get_children():
+		if child != elin_button:
+			child.queue_free()
 	leon_marker.add_child(create_character_sprite("레온", "청람 기사", Color(0.2, 0.38, 0.8, 1)))
 	garon_marker.add_child(create_character_sprite("가론", "용병대장", Color(0.46, 0.28, 0.2, 1)))
+	elin_marker.add_child(create_character_sprite("엘린", "숲의 사수", Color(0.2, 0.55, 0.3, 1)))
 	leon_marker.move_child(leon_button, leon_marker.get_child_count() - 1)
 	garon_marker.move_child(garon_button, garon_marker.get_child_count() - 1)
+	elin_marker.move_child(elin_button, elin_marker.get_child_count() - 1)
 
 func _on_expedition_pressed() -> void:
 	if opening_active:
@@ -166,6 +174,15 @@ func _on_garon_pressed() -> void:
 		return
 	dialogue_speaker_label.text = "가론"
 	dialogue_text_label.text = "성채가 낡았어도 깃발은 살아 있군. 다음 원정에서 내 정찰대를 붙이겠다."
+	dialogue_panel.visible = true
+
+func _on_elin_pressed() -> void:
+	if opening_active:
+		return
+	if not GameState.has_companion_joined("elin"):
+		return
+	dialogue_speaker_label.text = "엘린"
+	dialogue_text_label.text = "숲의 바람이 이 성채까지 닿는군. 다음 출정에서는 내가 길을 보겠다."
 	dialogue_panel.visible = true
 
 func _on_dialogue_confirm_pressed() -> void:
@@ -275,10 +292,12 @@ func build_castle_people_text() -> String:
 	return "\n".join(lines)
 
 func refresh_quest_log() -> void:
-	if GameState.has_companion_joined("garon"):
-		quest_log_label.text = "현재 목표:\n서리숲 관문의 숲의 사수 소문을 조사하라"
-	else:
+	if not GameState.has_companion_joined("garon"):
 		quest_log_label.text = "현재 목표:\n북부 감시요새의 가론을 찾아라"
+	elif not GameState.has_companion_joined("elin"):
+		quest_log_label.text = "현재 목표:\n서리숲 관문의 숲의 사수를 찾아라"
+	else:
+		quest_log_label.text = "현재 목표:\n성채를 정비하고 다음 소문을 기다려라"
 
 func refresh_status_message() -> void:
 	if GameState.active_rumor_id == "rumor_garon":
@@ -324,20 +343,28 @@ func _on_close_rumor_pressed() -> void:
 
 func refresh_courtyard_people() -> void:
 	garon_marker.visible = GameState.has_companion_joined("garon")
+	elin_marker.visible = GameState.has_companion_joined("elin")
 
 func refresh_castle_event_panel() -> void:
-	if GameState.pending_castle_event_id != "garon_arrival":
-		castle_event_overlay.visible = false
+	if GameState.pending_castle_event_id == "garon_arrival":
+		castle_event_speaker_label.text = "레온 / 가론"
+		castle_event_dialogue_label.text = "레온:\n\"주군, 북부 감시요새에서 데려온 용병대장이 도착했습니다.\"\n\n가론:\n\"여기가 청람 성채인가.\"\n\"생각보다 낡았군. 병사들도 지쳐 있고.\"\n\n레온:\n\"말은 조심하는 게 좋을 거다.\"\n\n가론:\n\"하지만 깃발은 아직 내려가지 않았군.\"\n\"좋다. 적어도 이곳에는 아직 싸울 이유가 남아 있어.\"\n\n레온:\n\"주군, 가론이 합류한 것은 큰 힘이 될 겁니다.\"\n\n가론이 청람 성채에 합류했습니다."
+		castle_event_overlay.visible = true
 		return
-	castle_event_speaker_label.text = "레온 / 가론"
-	castle_event_dialogue_label.text = "레온:\n\"주군, 북부 감시요새에서 데려온 용병대장이 도착했습니다.\"\n\n가론:\n\"여기가 청람 성채인가.\"\n\"생각보다 낡았군. 병사들도 지쳐 있고.\"\n\n레온:\n\"말은 조심하는 게 좋을 거다.\"\n\n가론:\n\"하지만 깃발은 아직 내려가지 않았군.\"\n\"좋다. 적어도 이곳에는 아직 싸울 이유가 남아 있어.\"\n\n레온:\n\"주군, 가론이 합류한 것은 큰 힘이 될 겁니다.\"\n\n가론이 청람 성채에 합류했습니다."
-	castle_event_overlay.visible = true
+	if GameState.pending_castle_event_id == "elin_arrival":
+		castle_event_speaker_label.text = "레온 / 엘린"
+		castle_event_dialogue_label.text = "레온:\n\"주군, 서리숲 관문에서 온 사수가 도착했습니다.\"\n\n엘린:\n\"여기가 청람 성채구나.\"\n\"낡았네. 하지만… 난민들이 말한 것처럼, 아직 불빛은 남아 있어.\"\n\n레온:\n\"말은 조심하는 게 좋을 거다.\"\n\n엘린:\n\"걱정 마. 난 거짓 깃발에는 활을 겨누지만, 지키려는 사람에게는 등을 맡겨.\"\n\n레온:\n\"주군, 엘린이 합류한 것은 큰 힘이 될 겁니다.\"\n\n엘린이 청람 성채에 합류했습니다."
+		castle_event_overlay.visible = true
+		return
+	castle_event_overlay.visible = false
 
 func _on_castle_event_confirm_pressed() -> void:
 	if opening_active:
 		return
 	if GameState.pending_castle_event_id == "garon_arrival":
 		GameState.complete_castle_event("garon_arrival")
+	elif GameState.pending_castle_event_id == "elin_arrival":
+		GameState.complete_castle_event("elin_arrival")
 	refresh_castle_event_panel()
 	refresh_rumor_panel()
 	refresh_quest_log()

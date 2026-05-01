@@ -171,6 +171,21 @@ func initialize_story_events() -> void:
 			"choices": ["함께 싸워달라.", "백성을 지키기 위해 네 힘이 필요하다."],
 			"recruit_companion_id": "garon",
 			"completed": false
+		},
+		"recruit_elin": {
+			"id": "recruit_elin",
+			"region_id": "r3",
+			"title": "숲의 사수 엘린",
+			"speaker_name": "엘린",
+			"dialogue_lines": [
+				"멈춰. 이 숲은 진홍 공국의 길도, 청람 왕국의 길도 아니야.",
+				"나는 깃발을 믿지 않아. 숲을 버리고 도망친 군주들을 너무 많이 봤거든.",
+				"하지만… 난민 야영지의 아이들이 네 이름을 말하더라.",
+				"네가 정말 사람을 버리지 않는 자라면, 내 활은 네 길을 막지 않을 거야."
+			],
+			"choices": ["우리는 숲과 사람을 함께 지킬 것이다.", "청람의 깃발은 버려진 이들을 위해 다시 선다."],
+			"recruit_companion_id": "elin",
+			"completed": false
 		}
 	}
 	completed_story_events.clear()
@@ -354,18 +369,28 @@ func grant_companion_exp_on_victory(exp_gain: int = COMPANION_EXP_PER_WIN) -> Ar
 	return level_up_messages
 
 func queue_story_event_by_region(region_id: String) -> void:
-	if active_rumor_id != "rumor_garon":
+	if active_rumor_id == "":
 		return
-	if region_id != "r2":
+	var rumor_to_event: Dictionary = {
+		"rumor_garon": {"region_id": "r2", "event_id": "recruit_garon", "companion_id": "garon"},
+		"rumor_elin": {"region_id": "r3", "event_id": "recruit_elin", "companion_id": "elin"}
+	}
+	if not rumor_to_event.has(active_rumor_id):
 		return
-	if not companions.has("garon"):
+	var mapping: Dictionary = rumor_to_event[active_rumor_id]
+	var target_region_id: String = str(mapping.get("region_id", ""))
+	var event_id: String = str(mapping.get("event_id", ""))
+	var companion_id: String = str(mapping.get("companion_id", ""))
+	if region_id != target_region_id:
 		return
-	var garon_data: Dictionary = companions["garon"]
-	if bool(garon_data.get("joined", false)):
+	if not companions.has(companion_id):
 		return
-	if event_is_completed("recruit_garon"):
+	var companion_data: Dictionary = companions[companion_id]
+	if bool(companion_data.get("joined", false)):
 		return
-	pending_story_event_id = "recruit_garon"
+	if event_is_completed(event_id):
+		return
+	pending_story_event_id = event_id
 
 func event_is_completed(event_id: String) -> bool:
 	if completed_story_events.get(event_id, false):
@@ -399,11 +424,15 @@ func resolve_pending_story_event(_choice_index: int) -> String:
 	event_data["completed"] = true
 	story_events[pending_story_event_id] = event_data
 	completed_story_events[pending_story_event_id] = true
-	if pending_story_event_id == "recruit_garon":
+	var resolved_event_id: String = pending_story_event_id
+	if resolved_event_id == "recruit_garon":
 		complete_rumor("rumor_garon")
-		update_pending_castle_event()
-		if active_rumor_id == "":
+		pending_castle_event_id = "garon_arrival"
+		if active_rumor_id == "" and rumors.has("rumor_elin"):
 			track_rumor("rumor_elin")
+	elif resolved_event_id == "recruit_elin":
+		complete_rumor("rumor_elin")
+		pending_castle_event_id = "elin_arrival"
 	pending_story_event_id = ""
 	return "%s이(가) 동료로 합류했습니다!" % companion_name
 
@@ -539,15 +568,17 @@ func get_available_rumor_ids() -> Array[String]:
 	var rumor_ids: Array[String] = []
 	var garon_joined: bool = has_companion_joined("garon")
 	var elin_joined: bool = has_companion_joined("elin")
-	if not garon_joined:
+	if not garon_joined and rumors.has("rumor_garon") and not bool(rumors["rumor_garon"].get("completed", false)):
 		rumor_ids.append("rumor_garon")
-	elif not elin_joined:
+	elif not elin_joined and rumors.has("rumor_elin") and not bool(rumors["rumor_elin"].get("completed", false)):
 		rumor_ids.append("rumor_elin")
 	return rumor_ids
 
 func update_pending_castle_event() -> void:
 	if has_companion_joined("garon") and not completed_castle_events.has("garon_arrival"):
 		pending_castle_event_id = "garon_arrival"
+	elif has_companion_joined("elin") and not completed_castle_events.has("elin_arrival"):
+		pending_castle_event_id = "elin_arrival"
 
 func has_pending_castle_event() -> bool:
 	return pending_castle_event_id != ""
