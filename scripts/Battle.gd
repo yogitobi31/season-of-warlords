@@ -29,9 +29,14 @@ func create_ui() -> void:
 	add_child(count_label)
 
 func spawn_teams() -> void:
+	var player_bonuses := GameState.get_total_companion_bonuses()
 	for i in UNITS_PER_TEAM:
 		var p := Unit.new()
 		p.team = Unit.TEAM_PLAYER
+		p.max_hp += player_bonuses["max_hp"]
+		p.attack_power += player_bonuses["attack_power"]
+		p.move_speed += player_bonuses["move_speed"]
+		p.attack_range += player_bonuses["attack_range"]
 		p.global_position = Vector2(180 + i * 22, 170 + (i % 5) * 70)
 		add_child(p)
 		player_units.append(p)
