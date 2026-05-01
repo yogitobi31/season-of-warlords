@@ -91,9 +91,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -130.0
-offset_top = -20.0
+offset_top = -70.0
 offset_right = 130.0
-offset_bottom = 190.0
+offset_bottom = 140.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -126,10 +126,10 @@ flat = true
 [node name="RumorBoard" type="Panel" parent="SceneRoot"]
 custom_minimum_size = Vector2(140, 150)
 layout_mode = 1
-offset_left = 980.0
-offset_top = 410.0
-offset_right = 1120.0
-offset_bottom = 560.0
+offset_left = 1010.0
+offset_top = 400.0
+offset_right = 1150.0
+offset_bottom = 550.0
 
 [node name="RumorBoardLabel" type="Label" parent="SceneRoot/RumorBoard"]
 layout_mode = 1
@@ -155,10 +155,10 @@ flat = true
 [node name="LeonMarker" type="Panel" parent="SceneRoot"]
 custom_minimum_size = Vector2(130, 130)
 layout_mode = 1
-offset_left = 220.0
-offset_top = 430.0
-offset_right = 350.0
-offset_bottom = 560.0
+offset_left = 250.0
+offset_top = 440.0
+offset_right = 380.0
+offset_bottom = 570.0
 
 [node name="LeonButton" type="Button" parent="SceneRoot/LeonMarker"]
 layout_mode = 1
@@ -174,10 +174,10 @@ flat = true
 visible = false
 custom_minimum_size = Vector2(130, 130)
 layout_mode = 1
-offset_left = 420.0
-offset_top = 430.0
-offset_right = 550.0
-offset_bottom = 560.0
+offset_left = 450.0
+offset_top = 440.0
+offset_right = 580.0
+offset_bottom = 570.0
 
 [node name="GaronButton" type="Button" parent="SceneRoot/GaronMarker"]
 layout_mode = 1
@@ -193,10 +193,10 @@ flat = true
 visible = false
 custom_minimum_size = Vector2(130, 130)
 layout_mode = 1
-offset_left = 620.0
-offset_top = 430.0
-offset_right = 750.0
-offset_bottom = 560.0
+offset_left = 760.0
+offset_top = 440.0
+offset_right = 890.0
+offset_bottom = 570.0
 
 [node name="ElinButton" type="Button" parent="SceneRoot/ElinMarker"]
 layout_mode = 1
@@ -274,26 +274,26 @@ color = Color(0.96, 0.69, 0.26, 0.95)
 
 [node name="CrateA" type="ColorRect" parent="SceneRoot"]
 layout_mode = 1
-offset_left = 880.0
+offset_left = 920.0
 offset_top = 560.0
-offset_right = 930.0
+offset_right = 970.0
 offset_bottom = 610.0
 color = Color(0.42, 0.29, 0.17, 1)
 
 [node name="CrateB" type="ColorRect" parent="SceneRoot"]
 layout_mode = 1
-offset_left = 935.0
+offset_left = 975.0
 offset_top = 575.0
-offset_right = 980.0
+offset_right = 1020.0
 offset_bottom = 620.0
 color = Color(0.38, 0.26, 0.15, 1)
 
 [node name="TrainingDummy" type="Panel" parent="SceneRoot"]
 layout_mode = 1
-offset_left = 120.0
-offset_top = 500.0
-offset_right = 180.0
-offset_bottom = 620.0
+offset_left = 110.0
+offset_top = 470.0
+offset_right = 170.0
+offset_bottom = 590.0
 
 [node name="TrainingDummyLabel" type="Label" parent="SceneRoot/TrainingDummy"]
 layout_mode = 1
@@ -309,6 +309,16 @@ offset_bottom = -8.0
 grow_horizontal = 2
 text = "훈련 목각"
 horizontal_alignment = 1
+
+[node name="TrainingDummyButton" type="Button" parent="SceneRoot/TrainingDummy"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = ""
+flat = true
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 

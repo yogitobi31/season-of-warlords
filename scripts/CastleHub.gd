@@ -15,6 +15,7 @@ extends Control
 @onready var elin_button: Button = $SceneRoot/ElinMarker/ElinButton
 @onready var gate_button: Button = $SceneRoot/Gate/GateButton
 @onready var rumor_board_button: Button = $SceneRoot/RumorBoard/RumorBoardButton
+@onready var training_dummy_button: Button = $SceneRoot/TrainingDummy/TrainingDummyButton
 
 @onready var rumor_button: Button = $UILayer/TopMenu/RumorButton
 @onready var companion_button: Button = $UILayer/TopMenu/CompanionButton
@@ -56,6 +57,7 @@ func _ready() -> void:
 
 	gate_button.pressed.connect(_on_expedition_pressed)
 	rumor_board_button.pressed.connect(_on_rumor_pressed)
+	training_dummy_button.pressed.connect(_on_training_dummy_pressed)
 	leon_button.pressed.connect(_on_leon_pressed)
 	garon_button.pressed.connect(_on_garon_pressed)
 	elin_button.pressed.connect(_on_elin_pressed)
@@ -296,8 +298,10 @@ func refresh_quest_log() -> void:
 		quest_log_label.text = "현재 목표:\n북부 감시요새의 가론을 찾아라"
 	elif not GameState.has_companion_joined("elin"):
 		quest_log_label.text = "현재 목표:\n서리숲 관문의 숲의 사수를 찾아라"
+	elif not GameState.has_companion_joined("mira"):
+		quest_log_label.text = "현재 목표:\n고대 유적지에서 들려오는 이상한 빛의 소문을 조사하라"
 	else:
-		quest_log_label.text = "현재 목표:\n성채를 정비하고 다음 소문을 기다려라"
+		quest_log_label.text = "현재 목표:\n성채를 정비하고 다음 원정을 준비하라"
 
 func refresh_status_message() -> void:
 	if GameState.active_rumor_id == "rumor_garon":
@@ -305,6 +309,9 @@ func refresh_status_message() -> void:
 		return
 	if GameState.active_rumor_id == "rumor_elin":
 		status_label.text = "숲의 사수 소문을 추적 중입니다."
+		return
+	if GameState.active_rumor_id == "rumor_mira":
+		status_label.text = "고대 유적지의 푸른 빛 소문을 추적 중입니다."
 		return
 	status_label.text = ""
 
@@ -323,9 +330,14 @@ func refresh_rumor_panel() -> void:
 	if rumor_panel_rumor_id == "rumor_garon":
 		body_text = "\"북부 감시요새에는 진홍 공국의 명령을 따르지 않고, 백성들을 지키는 용병대장이 있다는 소문이 있습니다.\"\n"
 		body_text += "\"그의 이름은 가론. 약자를 버리는 군주는 따르지 않는다고 합니다.\""
-	else:
+	elif rumor_panel_rumor_id == "rumor_elin":
 		body_text = "\"서리숲 관문 근처에서 진홍 공국의 정찰대를 홀로 막아내는 사수가 있다는 소문이 있습니다.\"\n"
 		body_text += "\"그녀는 숲을 지키기 위해 누구의 깃발도 따르지 않는다고 합니다.\"\n\n관련 동료: 엘린"
+	elif rumor_panel_rumor_id == "rumor_mira":
+		body_text = "\"서부 협곡로 너머 고대 유적지에서 밤마다 푸른 빛이 솟아오른다는 소문이 있습니다.\"\n"
+		body_text += "\"그곳에는 진홍 공국도 녹림 변경백령도 아닌, 홀로 마법서를 지키는 견습 마법사가 있다고 합니다.\"\n\n관련 동료: 미라"
+	else:
+		body_text = "\"새로운 소문이 없습니다.\""
 	if bool(rumor_data.get("completed", false)):
 		body_text += "\n\n(이미 해결한 소문입니다.)"
 	rumor_body_label.text = body_text
@@ -340,6 +352,32 @@ func _on_track_rumor_pressed() -> void:
 
 func _on_close_rumor_pressed() -> void:
 	rumor_overlay.visible = false
+
+func _on_training_dummy_pressed() -> void:
+	if opening_active:
+		return
+	show_popup("훈련 목각", build_training_dummy_text())
+
+func build_training_dummy_text() -> String:
+	var lines: Array[String] = []
+	lines.append("병사들이 기본 전투 자세를 연습하는 훈련용 목각입니다.")
+	lines.append("현재 해금된 병종을 확인하고, 다음 전투를 준비할 수 있습니다.")
+	lines.append("")
+	lines.append("해금 병종:")
+	for class_id: String in GameState.unlocked_unit_classes:
+		var class_data: Dictionary = GameState.UNIT_CLASSES.get(class_id, {})
+		lines.append("- %s" % str(class_data.get("display_name", class_id)))
+	lines.append("")
+	lines.append("상성 팁:")
+	lines.append("- 창병은 기병에게 강합니다.")
+	lines.append("- 방패보병은 전열 유지에 강하지만 마법에 약합니다.")
+	lines.append("- 기병은 궁수와 소서러에게 강하지만 창병에게 약합니다.")
+	lines.append("")
+	lines.append("현재 성채 전투 보너스:")
+	lines.append("- 병영 보너스(체력): +%.1f" % GameState.get_soldier_hp_bonus())
+	lines.append("- 훈련장 보너스(공격력): +%.1f" % GameState.get_soldier_attack_bonus())
+	lines.append("- 숙소 보너스(사기): +%.1f" % GameState.get_army_morale_bonus())
+	return "\n".join(lines)
 
 func refresh_courtyard_people() -> void:
 	garon_marker.visible = GameState.has_companion_joined("garon")
