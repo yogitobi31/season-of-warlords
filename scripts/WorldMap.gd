@@ -13,6 +13,10 @@ var event_title_label: Label
 var event_speaker_label: Label
 var event_dialogue_label: Label
 var event_choices_container: VBoxContainer
+var story_event_result_active: bool = false
+var story_event_result_speaker: String = ""
+var story_event_result_text: String = ""
+var story_event_join_message: String = ""
 
 func _ready() -> void:
 	create_ui()
@@ -168,6 +172,9 @@ func refresh_story_event_panel() -> void:
 		child.queue_free()
 
 	if not GameState.has_pending_story_event():
+		if story_event_result_active:
+			_show_story_result_panel()
+			return
 		event_panel.visible = false
 		event_overlay.visible = false
 		return
@@ -199,9 +206,39 @@ func refresh_story_event_panel() -> void:
 
 func _on_story_choice_selected(choice_index: int) -> void:
 	var recruit_message: String = GameState.resolve_pending_story_event(choice_index)
-	if recruit_message != "":
-		GameState.last_battle_message = recruit_message
-		info_label.text = recruit_message
+	_activate_story_result(recruit_message)
+	refresh_story_event_panel()
+
+func _activate_story_result(recruit_message: String) -> void:
+	if recruit_message == "":
+		return
+	story_event_result_active = true
+	story_event_result_speaker = "가론"
+	story_event_result_text = "\"좋다. 네 말이 거짓인지 아닌지는 전장에서 확인하겠다.\"\n\"하지만 적어도, 도망치지 않는 눈은 마음에 드는군.\"\n\"가론. 오늘부터 내 검은 청람의 깃발 아래에 선다.\""
+	story_event_join_message = "가론이 동료로 합류했습니다!"
+
+func _show_story_result_panel() -> void:
+	for child in event_choices_container.get_children():
+		child.queue_free()
+	event_title_label.text = "[동료 합류]"
+	event_speaker_label.text = "화자: %s" % story_event_result_speaker
+	event_dialogue_label.text = "%s\n\n%s" % [story_event_result_text, story_event_join_message]
+
+	var confirm_button: Button = Button.new()
+	confirm_button.text = "[확인]"
+	confirm_button.custom_minimum_size = Vector2(620, 38)
+	confirm_button.pressed.connect(_on_story_result_confirmed)
+	event_choices_container.add_child(confirm_button)
+
+	event_overlay.visible = true
+	event_panel.visible = true
+	move_child(event_overlay, get_child_count() - 1)
+	move_child(event_panel, get_child_count() - 1)
+
+func _on_story_result_confirmed() -> void:
+	story_event_result_active = false
+	GameState.last_battle_message = story_event_join_message
+	info_label.text = story_event_join_message
 	refresh_companions_panel()
 	refresh_fortress_panel()
 	refresh_story_event_panel()
