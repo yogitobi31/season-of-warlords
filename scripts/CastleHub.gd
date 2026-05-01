@@ -19,6 +19,10 @@ extends Control
 @onready var rumor_board_button: Button = $SceneRoot/RumorBoard/RumorBoardButton
 @onready var training_dummy_button: Button = $SceneRoot/TrainingDummy/TrainingDummyButton
 @onready var management_button: Button = $SceneRoot/ManagementArea/ManagementButton
+@onready var gate_panel: Control = $SceneRoot/Gate
+@onready var rumor_board_panel: Control = $SceneRoot/RumorBoard
+@onready var training_dummy_panel: Control = $SceneRoot/TrainingDummy
+@onready var management_panel: Control = $SceneRoot/ManagementArea
 
 @onready var rumor_button: Button = $UILayer/TopMenu/RumorButton
 @onready var companion_button: Button = $UILayer/TopMenu/CompanionButton
@@ -51,6 +55,7 @@ var contextual_primary_button: Button
 var contextual_close_button: Button
 var selected_target_id: String = ""
 const DEFAULT_COURTYARD_TEXT: String = "청람 성채 안뜰이다. 소문 게시판을 확인하거나 성문을 통해 출정할 수 있다."
+const CASTLE_HUB_PIXEL_ASSET_ROOT: String = "res://assets/pixel/castlehub/"
 
 var rumor_panel_rumor_id: String = ""
 var opening_lines: Array[String] = []
@@ -63,6 +68,7 @@ var current_popup_mode: String = ""
 var hovered_upgrade_key: String = ""
 
 func _ready() -> void:
+	apply_castlehub_pixel_art_if_available()
 	build_character_markers()
 	refresh_quest_log()
 	refresh_rumor_panel()
@@ -129,6 +135,29 @@ func setup_manage_buttons() -> void:
 	refresh_upgrade_button_tooltips()
 
 func create_character_sprite(character_name: String, character_title: String, body_color: Color) -> Control:
+	var pixel_art_path: String = CASTLE_HUB_PIXEL_ASSET_ROOT + "characters/%s_idle.png" % character_name_to_asset_id(character_name)
+	var pixel_art: Texture2D = try_load_texture(pixel_art_path)
+	if pixel_art:
+		var sprite_root: Control = Control.new()
+		sprite_root.custom_minimum_size = Vector2(130, 130)
+
+		var texture_rect: TextureRect = TextureRect.new()
+		texture_rect.texture = pixel_art
+		texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		texture_rect.anchor_right = 1.0
+		texture_rect.anchor_bottom = 1.0
+		texture_rect.offset_bottom = -30.0
+		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		sprite_root.add_child(texture_rect)
+
+		var name_label: Label = Label.new()
+		name_label.text = character_name
+		name_label.position = Vector2(0, 82)
+		name_label.size = Vector2(130, 22)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sprite_root.add_child(name_label)
+		return sprite_root
+
 	var root: Control = Control.new()
 	root.custom_minimum_size = Vector2(130, 130)
 
@@ -166,6 +195,47 @@ func create_character_sprite(character_name: String, character_title: String, bo
 	root.add_child(title_label)
 
 	return root
+
+func character_name_to_asset_id(character_name: String) -> String:
+	match character_name:
+		"레온":
+			return "leon"
+		"가론":
+			return "garon"
+		"엘린":
+			return "elin"
+		"미라":
+			return "mira"
+		_:
+			return ""
+
+func try_load_texture(path: String) -> Texture2D:
+	if not ResourceLoader.exists(path):
+		return null
+	var loaded: Resource = load(path)
+	return loaded as Texture2D
+
+func add_pixel_texture_to_control(target: Control, texture_path: String) -> bool:
+	var texture: Texture2D = try_load_texture(texture_path)
+	if not texture:
+		return false
+
+	var texture_rect: TextureRect = TextureRect.new()
+	texture_rect.name = "PixelArtVisual"
+	texture_rect.texture = texture
+	texture_rect.anchor_right = 1.0
+	texture_rect.anchor_bottom = 1.0
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	target.add_child(texture_rect)
+	target.move_child(texture_rect, 0)
+	return true
+
+func apply_castlehub_pixel_art_if_available() -> void:
+	add_pixel_texture_to_control(gate_panel, CASTLE_HUB_PIXEL_ASSET_ROOT + "objects/castle_gate.png")
+	add_pixel_texture_to_control(rumor_board_panel, CASTLE_HUB_PIXEL_ASSET_ROOT + "objects/rumor_board.png")
+	add_pixel_texture_to_control(training_dummy_panel, CASTLE_HUB_PIXEL_ASSET_ROOT + "objects/training_dummy.png")
+	add_pixel_texture_to_control(management_panel, CASTLE_HUB_PIXEL_ASSET_ROOT + "objects/management_desk.png")
 
 func build_character_markers() -> void:
 	for child: Node in leon_marker.get_children():
