@@ -56,7 +56,7 @@ var barracks_level: int = 1
 var training_ground_level: int = 0
 var lodging_level: int = 0
 var unlocked_unit_classes: Array[String] = ["infantry"]
-var unlocked_special_classes: Array[String] = []
+var unlocked_special_classes: Dictionary = {}
 
 # 기본 성채 데이터 (MVP)
 var fortress_data: Dictionary = {
@@ -78,7 +78,7 @@ var current_region_id: String = ""
 var current_region_event_id: String = ""
 var last_battle_result: String = ""
 var last_battle_message: String = ""
-var resolved_region_events: Array[String] = []
+var resolved_region_events: Dictionary = {}
 
 const REGION_ACTION_TYPES: Array[String] = ["conquest", "exploration", "rescue", "defense", "escort", "ambush", "choice", "training", "resource", "ritual"]
 const REGION_OBJECTIVE_TYPES: Array[String] = ["rout", "survive", "protect", "investigate", "choice", "unlock", "boss", "resource"]
@@ -120,7 +120,7 @@ func initialize_regions() -> void:
 	training_ground_level = 0
 	lodging_level = 0
 	unlocked_unit_classes = ["infantry"]
-	unlocked_special_classes = []
+	unlocked_special_classes = {}
 
 func initialize_companions() -> void:
 	companions = {
@@ -160,7 +160,7 @@ func initialize_companions() -> void:
 		"mira": {
 			"id": "mira",
 			"name": "미라",
-			"title": "견습 마법사",
+			"title": "유적의 마도사",
 			"level": 1,
 			"exp": 0,
 			"joined": false,
@@ -242,7 +242,7 @@ func initialize_rumors() -> void:
 		},
 		"rumor_mira": {
 			"id": "rumor_mira",
-			"title": "고대 유적지의 견습 마법사",
+			"title": "고대 유적지의 마력 흔적",
 			"target_region_id": "r7",
 			"related_companion_id": "mira",
 			"active": false,
@@ -398,18 +398,18 @@ func set_current_expedition(region_id: String, action_type: String, event_id: St
 
 func clear_current_expedition() -> void:
 	current_region_id = ""
-	current_expedition_mode = "conquest"
+	current_expedition_mode = ""
 	current_region_event_id = ""
 
 func is_region_event_resolved_by_id(event_id: String) -> bool:
-	if event_id == "":
+	if event_id.is_empty():
 		return false
 	return resolved_region_events.has(event_id)
 
 func mark_region_event_resolved_by_id(event_id: String) -> void:
-	if event_id == "" or resolved_region_events.has(event_id):
+	if event_id.is_empty() or resolved_region_events.has(event_id):
 		return
-	resolved_region_events.append(event_id)
+	resolved_region_events[event_id] = true
 
 func has_unresolved_region_event(region_data: Dictionary) -> bool:
 	var event_id: String = str(region_data.get("region_event_id", region_data.get("event_id", "")))
@@ -418,13 +418,14 @@ func has_unresolved_region_event(region_data: Dictionary) -> bool:
 	return not is_region_event_resolved_by_id(event_id)
 
 func unlock_special_class(class_id: String) -> void:
-	if class_id == "":
+	if class_id.is_empty():
 		return
 	unlock_unit_class(class_id)
-	if not unlocked_special_classes.has(class_id):
-		unlocked_special_classes.append(class_id)
+	unlocked_special_classes[class_id] = true
 
 func is_special_class_unlocked(class_id: String) -> bool:
+	if class_id.is_empty():
+		return false
 	return unlocked_special_classes.has(class_id)
 
 func is_companion_recruited(companion_id: String) -> bool:
@@ -591,8 +592,10 @@ func apply_battle_result(player_won: bool) -> void:
 			var explore_messages: Array[String] = ["조사 완료! %s의 봉인이 풀렸습니다." % attacked_region_name]
 			var explore_rewards: Dictionary = get_region_rewards(defense_region_id)
 			apply_rewards(explore_rewards)
-			if current_region_event_id != "":
+			if not current_region_event_id.is_empty():
 				mark_region_event_resolved_by_id(current_region_event_id)
+				if current_region_event_id == "ancient_ruins_mira":
+					unlock_special_class("sorcerer")
 			queue_story_event_by_region(defense_region_id)
 			if has_pending_story_event():
 				explore_messages.append("새로운 동료 이벤트가 발생했습니다.")
@@ -737,7 +740,8 @@ func get_available_rumor_ids() -> Array[String]:
 		rumor_ids.append("rumor_garon")
 	if garon_joined and not elin_joined and rumors.has("rumor_elin") and not bool(rumors["rumor_elin"].get("completed", false)):
 		rumor_ids.append("rumor_elin")
-	if garon_joined and elin_joined and not mira_joined and rumors.has("rumor_mira") and not bool(rumors["rumor_mira"].get("completed", false)):
+	var mira_event_resolved: bool = is_region_event_resolved_by_id("ancient_ruins_mira")
+	if garon_joined and elin_joined and not mira_joined and not mira_event_resolved and rumors.has("rumor_mira") and not bool(rumors["rumor_mira"].get("completed", false)):
 		rumor_ids.append("rumor_mira")
 	var unique_ids: Array[String] = []
 	for rumor_id: String in rumor_ids:
