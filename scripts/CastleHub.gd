@@ -1,8 +1,8 @@
 extends Control
 
-@onready var companions_label: Label = $MainMargin/MainVBox/TopHBox/SideInfoVBox/CompanionsPanel/CompanionsLabel
-@onready var facilities_label: Label = $MainMargin/MainVBox/TopHBox/SideInfoVBox/FacilitiesPanel/FacilitiesLabel
-@onready var castle_people_label: Label = $MainMargin/MainVBox/TopHBox/SideInfoVBox/CastlePeoplePanel/CastlePeopleLabel
+@onready var companions_label: Label = $MainMargin/MainVBox/CenterHBox/SideInfoVBox/CompanionsPanel/CompanionsLabel
+@onready var facilities_label: Label = $MainMargin/MainVBox/CenterHBox/SideInfoVBox/FacilitiesPanel/FacilitiesLabel
+@onready var castle_people_label: Label = $MainMargin/MainVBox/CenterHBox/SideInfoVBox/CastlePeoplePanel/CastlePeopleLabel
 @onready var chapter_progress_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ChapterProgressPanel/ChapterProgressLabel
 @onready var status_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/StatusLabel
 @onready var expedition_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/ExpeditionButton
@@ -45,16 +45,14 @@ func refresh_companions() -> void:
 	for companion_data: Dictionary in GameState.get_companions_list():
 		var joined: bool = bool(companion_data.get("joined", false))
 		if joined:
-			lines.append("- %s (%s) Lv.%d EXP %d/100" % [
+			lines.append("[합류] %s Lv.%d EXP %d/100" % [
 				str(companion_data.get("name", "?")),
-				str(companion_data.get("title", "")),
 				int(companion_data.get("level", 1)),
 				int(companion_data.get("exp", 0))
 			])
 		else:
-			lines.append("- %s (%s) 미합류" % [
+			lines.append("[미합류] %s" % [
 				str(companion_data.get("name", "?")),
-				str(companion_data.get("title", ""))
 			])
 	companions_label.text = "\n".join(lines)
 
@@ -127,9 +125,9 @@ func refresh_castle_people() -> void:
 func refresh_chapter_progress() -> void:
 	var lines: Array[String] = ["1장: 청람 성채의 깃발", "", "현재 목표:"]
 	if GameState.has_companion_joined("garon"):
-		lines.append("- 서리숲 관문에 숨어 있는 숲의 사수에 대한 소문을 조사하라")
+		lines.append("서리숲 관문의 숲의 사수에 대한 소문을 조사하세요.")
 	else:
-		lines.append("- 북부 감시요새의 용병대장 가론을 찾아라")
+		lines.append("가론의 소문을 추적합니다.\n북부 감시요새로 출정하세요.")
 	chapter_progress_label.text = "\n".join(lines)
 
 func refresh_castle_event_panel() -> void:
