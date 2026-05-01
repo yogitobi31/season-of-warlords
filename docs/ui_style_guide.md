@@ -1,0 +1,25 @@
+# Season of Warlords UI Style Guide
+
+## Core Rules
+1. One piece of information appears in only one place.
+2. Do not place long text directly over the central map or scene.
+3. Region buttons show only name, danger, and optional rumor marker.
+4. Detailed information belongs in panels.
+5. Buttons must not stretch vertically.
+6. Korean tooltip/info text must have enough width.
+7. Close buttons must always remain visible.
+8. UI spacing should follow 8/12/16/24 px rhythm.
+9. Before adding content, check for overlap.
+10. Map area should contain only nodes, route lines, and minimal markers.
+
+## WorldMap Rules
+- Left panel: current rumor/objective/controls.
+- Right panel: selected region detail.
+- Lower right panel: companions and unlocked classes.
+- Central map: region nodes and route lines only.
+
+## CastleHub Rules
+- Castle courtyard is the scene.
+- Management popup uses fixed sections:
+  title, summary, upgrade info, buttons, close.
+- Upgrade details appear in only one info panel.

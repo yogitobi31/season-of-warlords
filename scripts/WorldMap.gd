@@ -2,13 +2,13 @@ extends Node2D
 
 const OBJECTIVE_PANEL_POS: Vector2 = Vector2(24, 20)
 const OBJECTIVE_PANEL_SIZE: Vector2 = Vector2(300, 140)
-const DETAIL_PANEL_POS: Vector2 = Vector2(910, 20)
+const DETAIL_PANEL_POS: Vector2 = Vector2(930, 20)
 const DETAIL_PANEL_SIZE: Vector2 = Vector2(330, 430)
-const COMPANION_PANEL_POS: Vector2 = Vector2(910, 470)
+const COMPANION_PANEL_POS: Vector2 = Vector2(930, 470)
 const COMPANION_PANEL_SIZE: Vector2 = Vector2(330, 180)
-const MAP_AREA_POS: Vector2 = Vector2(24, 180)
-const MAP_AREA_SIZE: Vector2 = Vector2(860, 500)
-const REGION_SIZE: Vector2 = Vector2(160, 76)
+const MAP_AREA_POS: Vector2 = Vector2(300, 180)
+const MAP_AREA_SIZE: Vector2 = Vector2(600, 500)
+const REGION_SIZE: Vector2 = Vector2(140, 60)
 
 var region_nodes: Dictionary = {}
 var info_label: Label
@@ -82,14 +82,14 @@ func create_ui() -> void:
 
 	fortress_button = Button.new()
 	fortress_button.text = "성채 보기"
-	fortress_button.position = Vector2(910, 660)
+	fortress_button.position = Vector2(930, 660)
 	fortress_button.size = Vector2(155, 40)
 	fortress_button.pressed.connect(_on_fortress_button_pressed)
 	add_child(fortress_button)
 
 	return_button = Button.new()
 	return_button.text = "성채로 돌아가기"
-	return_button.position = Vector2(1085, 660)
+	return_button.position = Vector2(1105, 660)
 	return_button.size = Vector2(155, 40)
 	return_button.pressed.connect(_on_return_button_pressed)
 	add_child(return_button)
@@ -185,8 +185,10 @@ func refresh_companions_panel() -> void:
 		else:
 			lines.append("%s 미합류" % companion.get("name", "?"))
 	lines.append("")
-	lines.append("병종:")
-	lines.append("보병 / 창병 / 방패보병")
+	lines.append("해금 병종")
+	lines.append("- 보병")
+	lines.append("- 창병")
+	lines.append("- 방패보병")
 	companions_label.text = "\n".join(lines)
 
 func refresh_fortress_panel() -> void:
@@ -314,10 +316,6 @@ func _on_story_result_confirmed() -> void:
 	refresh_story_event_panel()
 
 func _on_region_clicked(region_id: String) -> void:
-	if GameState.has_pending_story_event():
-		info_label.text = "진행 중인 동료 이벤트를 먼저 선택하세요."
-		return
-
 	var region_owner: int = GameState.get_region_owner(region_id)
 	var region_data: Dictionary = GameState.regions.get(region_id, {})
 	var danger_text: String = str(region_data.get("danger", "보통"))
@@ -335,16 +333,21 @@ func _on_region_clicked(region_id: String) -> void:
 	if suggested_use_text != "":
 		select_hint += "\n활용 팁: %s" % suggested_use_text
 	region_detail_label.text = _format_region_detail(region_id, region_data, reward_text, enemy_class_preview)
+	if GameState.has_pending_story_event():
+		info_label.text = "진행 중인 동료 이벤트를 먼저 선택하세요."
+		refresh_regions()
+		return
 
 	if GameState.selected_region_id == "":
+		if region_owner == GameState.PLAYER_FACTION:
+			GameState.selected_region_id = region_id
+			info_label.text = "선택된 지역: %s\n%s\n인접한 적 지역을 선택하세요." % [GameState.regions[region_id]["name"], select_hint]
+			refresh_regions()
+			return
 		if region_owner != GameState.PLAYER_FACTION:
 			info_label.text = "먼저 청람 왕국 소유 지역을 선택하세요."
 			refresh_regions()
 			return
-		GameState.selected_region_id = region_id
-		info_label.text = "선택된 지역: %s\n%s\n인접한 적 지역을 선택하세요." % [GameState.regions[region_id]["name"], select_hint]
-		refresh_regions()
-		return
 
 	if region_id == GameState.selected_region_id:
 		GameState.clear_selection()
@@ -455,7 +458,7 @@ func _format_expected_enemy_classes(region_data: Dictionary) -> String:
 		names.append(str(class_data.get("display_name", class_id)))
 	if names.is_empty():
 		return "정보 없음"
-	return ", ".join(names)
+	return " / ".join(names)
 
 func _on_return_button_pressed() -> void:
 	GameState.clear_selection()
