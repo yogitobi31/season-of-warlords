@@ -58,7 +58,7 @@ func _ready() -> void:
 	castle_event_confirm_button.pressed.connect(_on_castle_event_confirm_pressed)
 	dialogue_confirm_button.pressed.connect(_on_dialogue_confirm_pressed)
 
-func create_character_sprite(name: String, title: String, body_color: Color) -> Control:
+func create_character_sprite(character_name: String, character_title: String, body_color: Color) -> Control:
 	var root: Control = Control.new()
 	root.custom_minimum_size = Vector2(130, 130)
 
@@ -81,14 +81,14 @@ func create_character_sprite(name: String, title: String, body_color: Color) -> 
 	root.add_child(head)
 
 	var name_label: Label = Label.new()
-	name_label.text = name
+	name_label.text = character_name
 	name_label.position = Vector2(0, 82)
 	name_label.size = Vector2(130, 22)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(name_label)
 
 	var title_label: Label = Label.new()
-	title_label.text = title
+	title_label.text = character_title
 	title_label.position = Vector2(0, 102)
 	title_label.size = Vector2(130, 20)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -106,8 +106,8 @@ func build_character_markers() -> void:
 			child.queue_free()
 	leon_marker.add_child(create_character_sprite("레온", "청람 기사", Color(0.2, 0.38, 0.8, 1)))
 	garon_marker.add_child(create_character_sprite("가론", "용병대장", Color(0.46, 0.28, 0.2, 1)))
-	leon_button.raise()
-	garon_button.raise()
+	leon_marker.move_child(leon_button, leon_marker.get_child_count() - 1)
+	garon_marker.move_child(garon_button, garon_marker.get_child_count() - 1)
 
 func _on_expedition_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/WorldMap.tscn")
