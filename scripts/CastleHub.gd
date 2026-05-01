@@ -289,36 +289,16 @@ func build_manage_text() -> String:
 	lines.append("- 훈련장 Lv.%d" % GameState.training_ground_level)
 	lines.append("- 숙소 Lv.%d" % GameState.lodging_level)
 	lines.append("")
-	lines.append("강화 효과")
-	lines.append("- 병영: 일반 병사 HP 증가")
-	lines.append("- 훈련장: 일반 병사 공격력 증가")
-	lines.append("- 숙소: 부대 사기 보너스 증가")
-	lines.append("")
 	lines.append("추천")
 	lines.append("- 부족한 자원은 주변 소규모 지역에서 확보하세요.")
 	lines.append("- 강화 전, 아래 버튼에 마우스를 올려 비용과 효과를 확인하세요.")
 	return "\n".join(lines)
 
 func refresh_upgrade_button_tooltips() -> void:
-	upgrade_barracks_button.tooltip_text = build_upgrade_tooltip("barracks")
-	upgrade_training_button.tooltip_text = build_upgrade_tooltip("training_ground")
-	upgrade_lodging_button.tooltip_text = build_upgrade_tooltip("lodging")
-
-func build_upgrade_tooltip(upgrade_key: String) -> String:
-	var cost: Dictionary = GameState.get_upgrade_cost(upgrade_key)
-	var need_gold: int = int(cost.get("gold", 0))
-	var need_materials: int = int(cost.get("materials", 0))
-	var enough_resources: bool = GameState.gold >= need_gold and GameState.materials >= need_materials
-	var lines: Array[String] = []
-	lines.append(get_upgrade_display_name(upgrade_key))
-	lines.append("비용: 금화 %d / 자재 %d" % [need_gold, need_materials])
-	lines.append("현재 레벨: Lv.%d" % get_upgrade_level(upgrade_key))
-	lines.append("효과: %s" % get_upgrade_effect_text(upgrade_key))
-	lines.append("현재 보너스: %s" % get_upgrade_current_bonus_text(upgrade_key))
-	lines.append("강화 후 보너스: %s" % get_upgrade_next_bonus_text(upgrade_key))
-	lines.append("보유 자원: 금화 %d / 자재 %d" % [GameState.gold, GameState.materials])
-	lines.append("자원 충분" if enough_resources else "자원 부족")
-	return "\n".join(lines)
+	# 강화 상세 정보는 UpgradeInfoPanel 단일 시스템에서만 표시합니다.
+	upgrade_barracks_button.tooltip_text = ""
+	upgrade_training_button.tooltip_text = ""
+	upgrade_lodging_button.tooltip_text = ""
 
 func show_upgrade_info(upgrade_key: String) -> void:
 	hovered_upgrade_key = upgrade_key

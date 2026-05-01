@@ -446,16 +446,16 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.4)
 
 [node name="PopupPanel" type="Panel" parent="UILayer/InfoPopupOverlay"]
-offset_left = 320.0
+offset_left = 300.0
 offset_top = 110.0
-offset_right = 960.0
+offset_right = 980.0
 offset_bottom = 610.0
 
 [node name="PopupTitleLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel"]
 layout_mode = 0
 offset_left = 40.0
 offset_top = 20.0
-offset_right = 600.0
+offset_right = 520.0
 offset_bottom = 64.0
 theme_override_font_sizes/font_size = 28
 text = "정보"
@@ -464,7 +464,7 @@ text = "정보"
 layout_mode = 0
 offset_left = 40.0
 offset_top = 76.0
-offset_right = 600.0
+offset_right = 640.0
 offset_bottom = 286.0
 
 [node name="PopupBodyLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupBodyScroll"]
@@ -477,7 +477,7 @@ text = "내용"
 layout_mode = 0
 offset_left = 40.0
 offset_top = 300.0
-offset_right = 600.0
+offset_right = 640.0
 offset_bottom = 380.0
 
 [node name="UpgradeInfoMargin" type="MarginContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/UpgradeInfoPanel"]
@@ -503,18 +503,18 @@ text = "강화 버튼에 마우스를 올리면 비용과 효과가 표시됩니
 layout_mode = 0
 offset_left = 40.0
 offset_top = 392.0
-offset_right = 600.0
+offset_right = 640.0
 offset_bottom = 434.0
 alignment = 1
-theme_override_constants/separation = 20
+theme_override_constants/separation = 12
 
 [node name="PopupCloseButton" type="Button" parent="UILayer/InfoPopupOverlay/PopupPanel"]
-custom_minimum_size = Vector2(180, 38)
+custom_minimum_size = Vector2(100, 38)
 layout_mode = 0
-offset_left = 230.0
-offset_top = 444.0
-offset_right = 410.0
-offset_bottom = 482.0
+offset_left = 560.0
+offset_top = 16.0
+offset_right = 660.0
+offset_bottom = 54.0
 text = "닫기"
 
 [node name="RumorOverlay" type="Control" parent="UILayer"]
