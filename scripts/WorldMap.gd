@@ -31,52 +31,68 @@ func _ready() -> void:
 	refresh_story_event_panel()
 
 func create_ui() -> void:
+	var objective_panel: Panel = Panel.new()
+	objective_panel.position = Vector2(20, 20)
+	objective_panel.size = Vector2(520, 180)
+	add_child(objective_panel)
+
 	info_label = Label.new()
-	info_label.position = Vector2(20, 20)
-	info_label.size = Vector2(860, 170)
+	info_label.position = Vector2(14, 12)
+	info_label.size = Vector2(492, 156)
 	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info_label.text = "출정 지도 준비 중..."
-	add_child(info_label)
+	objective_panel.add_child(info_label)
+
+	var region_panel: Panel = Panel.new()
+	region_panel.position = Vector2(900, 20)
+	region_panel.size = Vector2(360, 350)
+	add_child(region_panel)
 
 	region_detail_label = Label.new()
-	region_detail_label.position = Vector2(910, 20)
-	region_detail_label.size = Vector2(360, 300)
+	region_detail_label.position = Vector2(12, 10)
+	region_detail_label.size = Vector2(336, 328)
 	region_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	region_detail_label.text = "지역을 선택하면 상세 정보가 표시됩니다."
-	add_child(region_detail_label)
+	region_panel.add_child(region_detail_label)
+
+	var status_panel: Panel = Panel.new()
+	status_panel.position = Vector2(900, 380)
+	status_panel.size = Vector2(360, 220)
+	add_child(status_panel)
 
 	companions_label = Label.new()
-	companions_label.position = Vector2(910, 330)
-	companions_label.size = Vector2(360, 190)
+	companions_label.position = Vector2(12, 10)
+	companions_label.size = Vector2(336, 198)
+	companions_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	companions_label.text = "동료 정보를 불러오는 중..."
-	add_child(companions_label)
+	status_panel.add_child(companions_label)
 
 	fortress_button = Button.new()
 	fortress_button.text = "성채 보기"
-	fortress_button.position = Vector2(910, 530)
-	fortress_button.size = Vector2(180, 40)
+	fortress_button.position = Vector2(900, 610)
+	fortress_button.size = Vector2(170, 40)
 	fortress_button.pressed.connect(_on_fortress_button_pressed)
 	add_child(fortress_button)
 
 	return_button = Button.new()
 	return_button.text = "성채로 돌아가기"
-	return_button.position = Vector2(1110, 530)
-	return_button.size = Vector2(160, 40)
+	return_button.position = Vector2(1090, 610)
+	return_button.size = Vector2(170, 40)
 	return_button.pressed.connect(_on_return_button_pressed)
 	add_child(return_button)
 
 	fortress_panel = Panel.new()
-	fortress_panel.position = Vector2(910, 580)
-	fortress_panel.size = Vector2(360, 130)
+	fortress_panel.position = Vector2(900, 660)
+	fortress_panel.size = Vector2(360, 56)
 	fortress_panel.visible = false
 	add_child(fortress_panel)
 
 	fortress_label = Label.new()
-	fortress_label.position = Vector2(12, 12)
-	fortress_label.size = Vector2(336, 276)
+	fortress_label.position = Vector2(10, 8)
+	fortress_label.size = Vector2(340, 40)
+	fortress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	fortress_panel.add_child(fortress_label)
 
-	# StoryEvent UI는 지역 버튼들보다 항상 위에 떠야 하므로 overlay/panel에 높은 z_index를 줍니다.
 	event_overlay = ColorRect.new()
 	event_overlay.position = Vector2(0, 0)
 	event_overlay.size = Vector2(1280, 720)
@@ -132,6 +148,7 @@ func refresh_regions() -> void:
 		var region_name: String = GameState.get_region_name(region_id)
 		var is_rumor_target: bool = (GameState.active_rumor_id == "rumor_garon" and region_id == "r2")
 		is_rumor_target = is_rumor_target or (GameState.active_rumor_id == "rumor_elin" and region_id == "r3")
+		is_rumor_target = is_rumor_target or (GameState.active_rumor_id == "rumor_mira" and region_id == "r7")
 		if is_rumor_target:
 			node.region_name = region_name
 		else:
@@ -172,19 +189,23 @@ func refresh_fortress_panel() -> void:
 	fortress_label.text = "\n".join(lines)
 
 func show_default_message() -> void:
-	var result_text: String = ""
+	var lines: Array[String] = []
 	if GameState.last_battle_message != "":
-		result_text = "직전 전투 결과:\n%s\n\n" % GameState.last_battle_message
-	var rumor_lines: Array[String] = []
+		lines.append("직전 전투:")
+		lines.append(GameState.last_battle_message)
+		lines.append("")
 	if GameState.active_rumor_id != "":
 		var active_rumor: Dictionary = GameState.get_active_rumor()
 		if not active_rumor.is_empty():
-			rumor_lines.append("현재 추적 중인 소문: %s" % str(active_rumor.get("title", "")))
-			var target_region_id: String = str(active_rumor.get("target_region_id", ""))
-			rumor_lines.append("목표: %s" % GameState.get_region_name(target_region_id))
-			rumor_lines.append("")
-	var base_text: String = "현재 목표:\n가론을 찾기 전, 주변 소규모 지역에서 병력을 성장시키세요.\n\n조작:\n1. 청람 소유 지역을 선택합니다.\n2. 인접한 적/중립 지역을 선택해 출정합니다."
-	info_label.text = result_text + "\n".join(rumor_lines) + base_text
+			lines.append("현재 소문:")
+			lines.append(str(active_rumor.get("title", "")))
+			lines.append("")
+	lines.append("현재 목표:")
+	lines.append(_get_current_goal_text())
+	lines.append("")
+	lines.append("조작:")
+	lines.append("청람 지역 선택 → 인접 지역 선택")
+	info_label.text = "\n".join(lines)
 
 func refresh_story_event_panel() -> void:
 	for child in event_choices_container.get_children():
@@ -344,6 +365,15 @@ func _is_attackable_from_selection(region_id: String) -> bool:
 	return GameState.get_region_owner(region_id) != GameState.PLAYER_FACTION
 
 
+
+func _get_current_goal_text() -> String:
+	if not GameState.has_companion_joined("garon"):
+		return "가론을 찾기 전, 주변 소규모 지역에서 병력을 성장시키세요."
+	if not GameState.has_companion_joined("elin"):
+		return "서리숲 관문의 숲의 사수를 찾아 전력을 보강하세요."
+	if not GameState.has_companion_joined("mira"):
+		return "고대 유적지의 견습 마법사를 찾아 마법 전력을 확보하세요."
+	return "성채를 정비하고 다음 원정을 준비하세요."
 
 func _format_reward_preview(region_data: Dictionary) -> String:
 	var reward_data: Dictionary = region_data.get("reward", {})
