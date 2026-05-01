@@ -2,14 +2,14 @@ extends Node2D
 
 # 10 vs 10 자동전투를 실행하는 최소 전투 컨트롤러
 
-const UNITS_PER_TEAM := 10
+const UNITS_PER_TEAM: int = 10
 
 var player_units: Array[Unit] = []
 var enemy_units: Array[Unit] = []
 var result_label: Label
 var count_label: Label
 var companions_label: Label
-var _battle_finished := false
+var _battle_finished: bool = false
 
 func _ready() -> void:
 	create_ui()
@@ -38,10 +38,12 @@ func create_ui() -> void:
 func spawn_teams() -> void:
 	var joined_companions: Array = GameState.get_joined_companions()
 	var deployed_companions: Array[String] = []
-	var companion_count := min(joined_companions.size(), UNITS_PER_TEAM)
+	var companion_count: int = joined_companions.size()
+	if companion_count > UNITS_PER_TEAM:
+		companion_count = UNITS_PER_TEAM
 
-	for i in UNITS_PER_TEAM:
-		var p := Unit.new()
+	for i: int in range(UNITS_PER_TEAM):
+		var p: Unit = Unit.new()
 		p.team = Unit.TEAM_PLAYER
 		if i < companion_count:
 			var companion: Dictionary = joined_companions[i]
@@ -54,7 +56,7 @@ func spawn_teams() -> void:
 		add_child(p)
 		player_units.append(p)
 
-		var e := Unit.new()
+		var e: Unit = Unit.new()
 		e.team = Unit.TEAM_ENEMY
 		e.global_position = Vector2(1100 - i * 22, 170 + (i % 5) * 70)
 		add_child(e)
@@ -66,18 +68,21 @@ func spawn_teams() -> void:
 		companions_label.text = "출전 동료: %s" % ", ".join(deployed_companions)
 
 func _apply_companion_stats(unit: Unit, companion_id: String, level: int) -> void:
-	var level_bonus := max(level - 1, 0)
+	var level_bonus: int = level - 1
+	if level_bonus < 0:
+		level_bonus = 0
+
 	match companion_id:
 		"leon":
-			unit.max_hp += 40.0 + level_bonus * 6.0
+			unit.max_hp += 40.0 + float(level_bonus) * 6.0
 		"garon":
-			unit.attack_power += 5.0 + level_bonus * 1.2
+			unit.attack_power += 5.0 + float(level_bonus) * 1.2
 		"elin":
-			unit.move_speed += 40.0 + level_bonus * 4.0
+			unit.move_speed += 40.0 + float(level_bonus) * 4.0
 		"mira":
-			unit.attack_range += 28.0 + level_bonus * 2.5
+			unit.attack_range += 28.0 + float(level_bonus) * 2.5
 		_:
-			unit.max_hp += 20.0 + level_bonus * 4.0
+			unit.max_hp += 20.0 + float(level_bonus) * 4.0
 
 func _process(delta: float) -> void:
 	if _battle_finished:
@@ -88,9 +93,9 @@ func _process(delta: float) -> void:
 	enemy_units = _filter_alive(enemy_units)
 	update_battle_ui()
 
-	for unit in player_units:
+	for unit: Unit in player_units:
 		unit.tick_ai(delta, enemy_units)
-	for unit in enemy_units:
+	for unit: Unit in enemy_units:
 		unit.tick_ai(delta, player_units)
 
 	player_units = _filter_alive(player_units)
@@ -101,17 +106,17 @@ func _process(delta: float) -> void:
 		finish_battle(not player_units.is_empty())
 
 func update_battle_ui() -> void:
-	var player_count := player_units.size()
-	var enemy_count := enemy_units.size()
-	var player_name := GameState.get_faction_name(GameState.PLAYER_FACTION)
-	var enemy_name := "적군"
+	var player_count: int = player_units.size()
+	var enemy_count: int = enemy_units.size()
+	var player_name: String = GameState.get_faction_name(GameState.PLAYER_FACTION)
+	var enemy_name: String = "적군"
 	if GameState.defense_region_id != "":
 		enemy_name = GameState.get_faction_name(GameState.get_region_owner(GameState.defense_region_id))
 	count_label.text = "%s %d명 / %s %d명" % [player_name, player_count, enemy_name, enemy_count]
 
 func _filter_alive(units: Array[Unit]) -> Array[Unit]:
 	var result: Array[Unit] = []
-	for u in units:
+	for u: Unit in units:
 		if u != null and is_instance_valid(u) and u.is_alive():
 			result.append(u)
 	return result
