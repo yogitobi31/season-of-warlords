@@ -56,6 +56,7 @@ var barracks_level: int = 1
 var training_ground_level: int = 0
 var lodging_level: int = 0
 var unlocked_unit_classes: Array[String] = ["infantry"]
+var unlocked_special_classes: Array[String] = []
 
 # 기본 성채 데이터 (MVP)
 var fortress_data: Dictionary = {
@@ -103,6 +104,7 @@ func initialize_regions() -> void:
 	current_expedition_mode = "conquest"
 	current_region_event_id = ""
 	resolved_region_events.clear()
+	unlocked_special_classes.clear()
 	last_battle_result = ""
 	last_battle_message = ""
 	gold = 120
@@ -113,6 +115,7 @@ func initialize_regions() -> void:
 	training_ground_level = 0
 	lodging_level = 0
 	unlocked_unit_classes = ["infantry"]
+	unlocked_special_classes = []
 
 func initialize_companions() -> void:
 	companions = {
@@ -365,7 +368,7 @@ func set_expedition_context(from_region_id: String, target_region_id: String, mo
 	attack_region_id = from_region_id
 	defense_region_id = target_region_id
 	current_expedition_mode = mode
-	current_region_event_id = target_region_id
+	current_region_event_id = get_region_event_id(target_region_id)
 
 func get_battle_title() -> String:
 	if attack_region_id == "" or defense_region_id == "":
@@ -382,25 +385,36 @@ func get_battle_title() -> String:
 		_:
 			return "전투: %s → %s" % [get_region_name(attack_region_id), get_region_name(defense_region_id)]
 
+
+func get_region_event_id(region_id: String) -> String:
+	if not regions.has(region_id):
+		return ""
+	var region_data: Dictionary = regions[region_id]
+	return str(region_data.get("region_event_id", region_data.get("event_id", "")))
+
 func get_region_action_type(region_id: String) -> String:
 	if not regions.has(region_id):
 		return "conquest"
 	return str(regions[region_id].get("action_type", "conquest"))
 
 func is_region_event_resolved(region_id: String) -> bool:
-	return resolved_region_events.has(region_id)
+	var event_id: String = get_region_event_id(region_id)
+	if event_id == "":
+		return false
+	return resolved_region_events.has(event_id)
 
 func mark_region_event_resolved(region_id: String) -> void:
-	if resolved_region_events.has(region_id):
+	var event_id: String = get_region_event_id(region_id)
+	if event_id == "" or resolved_region_events.has(event_id):
 		return
-	resolved_region_events.append(region_id)
+	resolved_region_events.append(event_id)
 
 func region_has_unresolved_event(region_id: String) -> bool:
 	if not regions.has(region_id):
 		return false
 	if is_region_event_resolved(region_id):
 		return false
-	var event_id_text: String = str(regions[region_id].get("event_id", ""))
+	var event_id_text: String = get_region_event_id(region_id)
 	if event_id_text != "":
 		return true
 	var action_type: String = get_region_action_type(region_id)
@@ -509,6 +523,8 @@ func resolve_pending_story_event(_choice_index: int) -> String:
 		complete_rumor("rumor_mira")
 		pending_castle_event_id = "mira_arrival"
 		var unlocked_sorcerer: bool = unlock_unit_class("sorcerer")
+		if unlocked_sorcerer and not unlocked_special_classes.has("sorcerer"):
+			unlocked_special_classes.append("sorcerer")
 		var recruit_text: String = "%s이(가) 동료로 합류했습니다!" % companion_name
 		if unlocked_sorcerer:
 			recruit_text += "\n소서러 병종이 해금되었습니다!"

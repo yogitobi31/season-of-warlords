@@ -3,7 +3,7 @@
 ## Core Rules
 1. One piece of information appears in only one place.
 2. Do not place long text directly over the central map or scene.
-3. Region buttons show only name, danger, and optional rumor marker.
+3. Region map markers remain compact; central map avoids long text and shows only marker/icon + optional rumor marker.
 4. Detailed information belongs in panels.
 5. Buttons must not stretch vertically.
 6. Korean tooltip/info text must have enough width.
