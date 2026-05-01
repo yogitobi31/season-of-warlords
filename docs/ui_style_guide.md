@@ -23,3 +23,13 @@
 - Management popup uses fixed sections:
   title, summary, upgrade info, buttons, close.
 - Upgrade details appear in only one info panel.
+
+## WorldMap Region Node Rules
+- Region nodes should be compact markers, not large text buttons.
+- Visible marker: about 18~24 px.
+- Click area: about 44~48 px.
+- Region names are hidden by default.
+- Region names appear on hover or selection.
+- Details belong in the right-side panel.
+- Do not solve map clutter by making larger spacing forever.
+- Future map should support pan/zoom and zoom-level-based labels.

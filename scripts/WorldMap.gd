@@ -8,7 +8,7 @@ const COMPANION_PANEL_POS: Vector2 = Vector2(935, 400)
 const COMPANION_PANEL_SIZE: Vector2 = Vector2(320, 210)
 const MAP_AREA_POS: Vector2 = Vector2(340, 120)
 const MAP_AREA_SIZE: Vector2 = Vector2(560, 560)
-const REGION_SIZE: Vector2 = Vector2(124, 56)
+const REGION_SIZE: Vector2 = RegionNode.CLICK_SIZE
 
 var region_nodes: Dictionary = {}
 var info_label: Label
@@ -159,6 +159,7 @@ func spawn_regions() -> void:
 		node.setup(region_id, data["name"], GameState.get_region_owner(region_id), data["adjacent"])
 		node.set_region_meta(str(data.get("danger", "보통")), false)
 		node.region_clicked.connect(_on_region_clicked)
+		node.region_hovered.connect(_on_region_hovered)
 		add_child(node)
 		region_nodes[region_id] = node
 
@@ -321,6 +322,22 @@ func _on_story_result_confirmed() -> void:
 	refresh_companions_panel()
 	refresh_fortress_panel()
 	refresh_story_event_panel()
+
+
+func _on_region_hovered(region_id: String, active: bool) -> void:
+	if active:
+		var region_data: Dictionary = GameState.regions.get(region_id, {})
+		info_label.text = "%s / 위험도: %s / 클릭하면 상세 정보 표시" % [
+			GameState.get_region_name(region_id),
+			str(region_data.get("danger", "보통"))
+		]
+		return
+	if GameState.selected_region_id == "":
+		show_default_message()
+	else:
+		var selected_id: String = GameState.selected_region_id
+		refresh_region_detail_panel(selected_id)
+		info_label.text = "선택된 지역: %s\n인접한 적 지역을 선택하세요." % GameState.get_region_name(selected_id)
 
 func _on_region_clicked(region_id: String) -> void:
 	refresh_region_detail_panel(region_id)
