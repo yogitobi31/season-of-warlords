@@ -9,6 +9,7 @@ var fortress_label: Label
 var return_button: Button
 var event_panel: Panel
 var event_title_label: Label
+var event_speaker_label: Label
 var event_dialogue_label: Label
 var event_choices_container: VBoxContainer
 
@@ -60,24 +61,29 @@ func create_ui() -> void:
 	fortress_panel.add_child(fortress_label)
 
 	event_panel = Panel.new()
-	event_panel.position = Vector2(250, 420)
-	event_panel.size = Vector2(600, 250)
+	event_panel.position = Vector2(350, 180)
+	event_panel.size = Vector2(620, 320)
 	event_panel.visible = false
 	add_child(event_panel)
 
 	event_title_label = Label.new()
 	event_title_label.position = Vector2(16, 12)
-	event_title_label.size = Vector2(560, 30)
+	event_title_label.size = Vector2(588, 30)
 	event_panel.add_child(event_title_label)
 
+	event_speaker_label = Label.new()
+	event_speaker_label.position = Vector2(16, 46)
+	event_speaker_label.size = Vector2(588, 24)
+	event_panel.add_child(event_speaker_label)
+
 	event_dialogue_label = Label.new()
-	event_dialogue_label.position = Vector2(16, 46)
-	event_dialogue_label.size = Vector2(560, 110)
+	event_dialogue_label.position = Vector2(16, 74)
+	event_dialogue_label.size = Vector2(588, 130)
 	event_panel.add_child(event_dialogue_label)
 
 	event_choices_container = VBoxContainer.new()
-	event_choices_container.position = Vector2(16, 160)
-	event_choices_container.size = Vector2(560, 80)
+	event_choices_container.position = Vector2(16, 216)
+	event_choices_container.size = Vector2(588, 90)
 	event_panel.add_child(event_choices_container)
 
 func spawn_regions() -> void:
@@ -140,10 +146,13 @@ func refresh_story_event_panel() -> void:
 	var event_data: Dictionary = GameState.get_pending_story_event()
 	event_title_label.text = "[%s]" % str(event_data.get("title", "이벤트"))
 	var speaker_name: String = str(event_data.get("speaker_name", "???"))
-	var dialogue_lines: Array = event_data.get("dialogue_lines", [])
-	var dialogue_text: String = "%s:\n" % speaker_name
-	for line in dialogue_lines:
-		dialogue_text += "\"%s\"\n" % str(line)
+	event_speaker_label.text = "화자: %s" % speaker_name
+	var dialogue_lines: Array[String] = []
+	for line_variant: Variant in event_data.get("dialogue_lines", []):
+		dialogue_lines.append(str(line_variant))
+	var dialogue_text: String = ""
+	for line: String in dialogue_lines:
+		dialogue_text += "\"%s\"\n" % line
 	event_dialogue_label.text = dialogue_text.strip_edges()
 
 	var choices: Array = event_data.get("choices", [])
