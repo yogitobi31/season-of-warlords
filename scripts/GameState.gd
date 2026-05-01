@@ -209,6 +209,14 @@ func initialize_rumors() -> void:
 			"related_companion_id": "elin",
 			"active": false,
 			"completed": false
+		},
+		"rumor_mira": {
+			"id": "rumor_mira",
+			"title": "고대 유적지의 견습 마법사",
+			"target_region_id": "r7",
+			"related_companion_id": "mira",
+			"active": false,
+			"completed": false
 		}
 	}
 	completed_rumors.clear()
@@ -568,10 +576,18 @@ func get_available_rumor_ids() -> Array[String]:
 	var rumor_ids: Array[String] = []
 	var garon_joined: bool = has_companion_joined("garon")
 	var elin_joined: bool = has_companion_joined("elin")
+	var mira_joined: bool = has_companion_joined("mira")
 	if not garon_joined and rumors.has("rumor_garon") and not bool(rumors["rumor_garon"].get("completed", false)):
 		rumor_ids.append("rumor_garon")
-	elif not elin_joined and rumors.has("rumor_elin") and not bool(rumors["rumor_elin"].get("completed", false)):
+	if garon_joined and not elin_joined and rumors.has("rumor_elin") and not bool(rumors["rumor_elin"].get("completed", false)):
 		rumor_ids.append("rumor_elin")
+	if garon_joined and elin_joined and not mira_joined and rumors.has("rumor_mira") and not bool(rumors["rumor_mira"].get("completed", false)):
+		rumor_ids.append("rumor_mira")
+	var unique_ids: Array[String] = []
+	for rumor_id: String in rumor_ids:
+		if not unique_ids.has(rumor_id):
+			unique_ids.append(rumor_id)
+	rumor_ids = unique_ids
 	return rumor_ids
 
 func update_pending_castle_event() -> void:
