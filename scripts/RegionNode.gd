@@ -8,7 +8,7 @@ signal region_clicked(region_id: String)
 @export var owner_faction: int = 0
 @export var adjacent_regions: Array = []
 
-const REGION_SIZE := Vector2(160, 76)
+const REGION_SIZE := Vector2(140, 60)
 
 var is_selected: bool = false
 var is_attackable: bool = false
@@ -118,6 +118,8 @@ func update_visual() -> void:
 	add_theme_color_override("font_hover_color", Color.WHITE)
 	add_theme_color_override("font_pressed_color", Color.WHITE)
 	add_theme_color_override("font_focus_color", Color.WHITE)
+	add_theme_font_size_override("font_size", 14)
+	text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 
 func _on_pressed() -> void:
 	print("Region clicked: ", region_id, " / ", region_name)
