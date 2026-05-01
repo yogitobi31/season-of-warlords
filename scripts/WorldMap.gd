@@ -238,6 +238,13 @@ func _activate_story_result(event_id: String, recruit_message: String) -> void:
 		story_event_result_text = "\"네가 한 말, 쉽게 믿지는 않겠어.\"\n\"하지만 오늘 전장에서 네가 도망치지 않는 건 봤다.\"\n\"서리숲의 길은 내가 열어줄게.\"\n\"엘린. 오늘부터 청람 성채와 함께 싸우겠다.\""
 		story_event_join_message = "엘린이 동료로 합류했습니다!"
 		story_event_result_battle_message = "엘린이 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
+	elif event_id == "recruit_mira":
+		story_event_result_speaker = "미라"
+		story_event_result_text = "\"저… 정말 함께 가도 되는 건가요?\"\n\"아직 완벽한 마법사는 아니지만, 도망치지는 않을게요.\"\n\"이 마법서가 누군가를 다치게 하는 도구가 아니라, 지키는 힘이 되게 만들고 싶어요.\"\n\"미라. 오늘부터 청람 성채에서 배우고, 싸우겠습니다.\""
+		story_event_join_message = "미라가 동료로 합류했습니다!"
+		if recruit_message.find("소서러 병종이 해금되었습니다!") >= 0:
+			story_event_join_message += "\n신규 병종 해금: 소서러"
+		story_event_result_battle_message = "미라가 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
 	else:
 		story_event_result_speaker = "가론"
 		story_event_result_text = "\"좋다. 네 말이 거짓인지 아닌지는 전장에서 확인하겠다.\"\n\"하지만 적어도, 도망치지 않는 눈은 마음에 드는군.\"\n\"가론. 오늘부터 내 검은 청람의 깃발 아래에 선다.\""
