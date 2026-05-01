@@ -2,6 +2,7 @@ extends Node2D
 
 var region_nodes: Dictionary = {}
 var info_label: Label
+var region_detail_label: Label
 var companions_label: Label
 var fortress_button: Button
 var fortress_panel: Panel
@@ -20,6 +21,7 @@ var story_event_join_message: String = ""
 
 func _ready() -> void:
 	create_ui()
+	create_route_lines()
 	spawn_regions()
 	refresh_regions()
 	show_default_message()
@@ -30,33 +32,41 @@ func _ready() -> void:
 func create_ui() -> void:
 	info_label = Label.new()
 	info_label.position = Vector2(20, 20)
-	info_label.size = Vector2(860, 120)
+	info_label.size = Vector2(860, 170)
+	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info_label.text = "출정 지도 준비 중..."
 	add_child(info_label)
 
+	region_detail_label = Label.new()
+	region_detail_label.position = Vector2(910, 20)
+	region_detail_label.size = Vector2(360, 300)
+	region_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	region_detail_label.text = "지역을 선택하면 상세 정보가 표시됩니다."
+	add_child(region_detail_label)
+
 	companions_label = Label.new()
-	companions_label.position = Vector2(910, 20)
-	companions_label.size = Vector2(360, 280)
+	companions_label.position = Vector2(910, 330)
+	companions_label.size = Vector2(360, 190)
 	companions_label.text = "동료 정보를 불러오는 중..."
 	add_child(companions_label)
 
 	fortress_button = Button.new()
 	fortress_button.text = "성채 보기"
-	fortress_button.position = Vector2(910, 310)
+	fortress_button.position = Vector2(910, 530)
 	fortress_button.size = Vector2(180, 40)
 	fortress_button.pressed.connect(_on_fortress_button_pressed)
 	add_child(fortress_button)
 
 	return_button = Button.new()
 	return_button.text = "성채로 돌아가기"
-	return_button.position = Vector2(1110, 310)
+	return_button.position = Vector2(1110, 530)
 	return_button.size = Vector2(160, 40)
 	return_button.pressed.connect(_on_return_button_pressed)
 	add_child(return_button)
 
 	fortress_panel = Panel.new()
-	fortress_panel.position = Vector2(910, 360)
-	fortress_panel.size = Vector2(360, 300)
+	fortress_panel.position = Vector2(910, 580)
+	fortress_panel.size = Vector2(360, 130)
 	fortress_panel.visible = false
 	add_child(fortress_panel)
 
@@ -110,6 +120,7 @@ func spawn_regions() -> void:
 		var node: RegionNode = RegionNode.new()
 		node.position = data["pos"]
 		node.setup(region_id, data["name"], GameState.get_region_owner(region_id), data["adjacent"])
+		node.set_region_meta(str(data.get("danger", "보통")), false)
 		node.region_clicked.connect(_on_region_clicked)
 		add_child(node)
 		region_nodes[region_id] = node
@@ -121,10 +132,12 @@ func refresh_regions() -> void:
 		var is_rumor_target: bool = (GameState.active_rumor_id == "rumor_garon" and region_id == "r2")
 		is_rumor_target = is_rumor_target or (GameState.active_rumor_id == "rumor_elin" and region_id == "r3")
 		if is_rumor_target:
-			node.region_name = "[소문 목표] %s" % region_name
+			node.region_name = region_name
 		else:
 			node.region_name = region_name
 		node.update_owner(GameState.get_region_owner(region_id))
+		var region_data: Dictionary = GameState.regions.get(region_id, {})
+		node.set_region_meta(str(region_data.get("danger", "보통")), is_rumor_target)
 		node.set_selected(region_id == GameState.selected_region_id)
 		node.set_attackable(_is_attackable_from_selection(region_id))
 
@@ -169,7 +182,7 @@ func show_default_message() -> void:
 			var target_region_id: String = str(active_rumor.get("target_region_id", ""))
 			rumor_lines.append("목표: %s" % GameState.get_region_name(target_region_id))
 			rumor_lines.append("")
-	var base_text: String = "출정 지도: 목적지를 선택하세요.\n청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
+	var base_text: String = "현재 목표:\n가론을 찾기 전, 주변 소규모 지역에서 병력을 성장시키세요.\n\n조작:\n1. 청람 소유 지역을 선택합니다.\n2. 인접한 적/중립 지역을 선택해 출정합니다."
 	info_label.text = result_text + "\n".join(rumor_lines) + base_text
 
 func refresh_story_event_panel() -> void:
@@ -269,6 +282,7 @@ func _on_region_clicked(region_id: String) -> void:
 		select_hint += "\n보상 성격: %s" % focus_text
 	if suggested_use_text != "":
 		select_hint += "\n활용 팁: %s" % suggested_use_text
+	region_detail_label.text = _format_region_detail(region_id, region_data, reward_text, enemy_class_preview)
 
 	if GameState.selected_region_id == "":
 		if region_owner != GameState.PLAYER_FACTION:
@@ -318,6 +332,48 @@ func _is_attackable_from_selection(region_id: String) -> bool:
 func _format_reward_preview(region_data: Dictionary) -> String:
 	var reward_data: Dictionary = region_data.get("reward", {})
 	return GameState.format_reward_text(reward_data)
+
+func _format_region_detail(region_id: String, region_data: Dictionary, reward_text: String, enemy_preview: String) -> String:
+	var lines: Array[String] = []
+	lines.append("지역: %s" % GameState.get_region_name(region_id))
+	lines.append("세력: %s" % GameState.FACTION_NAMES.get(GameState.get_region_owner(region_id), "미상"))
+	lines.append("위험도: %s" % str(region_data.get("danger", "보통")))
+	lines.append("권장 준비: %s" % str(region_data.get("recommended", "기본 병력")))
+	lines.append("전투 유형: %s" % str(region_data.get("encounter_type", "미상")))
+	lines.append("예상 적 병종: %s" % enemy_preview)
+	lines.append("획득 보상: %s" % reward_text)
+	lines.append("보상 성격: %s" % str(region_data.get("economy_role", "일반")))
+	lines.append("활용 팁: %s" % str(region_data.get("suggested_use", "전력을 점검하고 출정하세요.")))
+	if region_data.has("unlock_class"):
+		lines.append("해금 요소: %s" % str(region_data.get("unlock_class", "")))
+	return "\n".join(lines)
+
+func create_route_lines() -> void:
+	var line_layer: Node2D = Node2D.new()
+	line_layer.z_index = -20
+	add_child(line_layer)
+	var drawn_edges: Dictionary = {}
+	for region_id_variant: Variant in GameState.regions.keys():
+		var region_id: String = str(region_id_variant)
+		var region_data: Dictionary = GameState.regions.get(region_id, {})
+		var from_pos: Vector2 = region_data.get("pos", Vector2.ZERO) + Vector2(80, 38)
+		for adjacent_variant: Variant in region_data.get("adjacent", []):
+			var adjacent_id: String = str(adjacent_variant)
+			var edge_a: String = "%s-%s" % [region_id, adjacent_id]
+			var edge_b: String = "%s-%s" % [adjacent_id, region_id]
+			if drawn_edges.has(edge_a) or drawn_edges.has(edge_b):
+				continue
+			var adjacent_data: Dictionary = GameState.regions.get(adjacent_id, {})
+			if adjacent_data.is_empty():
+				continue
+			var to_pos: Vector2 = adjacent_data.get("pos", Vector2.ZERO) + Vector2(80, 38)
+			var route_line: Line2D = Line2D.new()
+			route_line.default_color = Color(0.8, 0.82, 0.9, 0.35)
+			route_line.width = 2.0
+			route_line.add_point(from_pos)
+			route_line.add_point(to_pos)
+			line_layer.add_child(route_line)
+			drawn_edges[edge_a] = true
 
 func _format_expected_enemy_classes(region_data: Dictionary) -> String:
 	var names: Array[String] = []
