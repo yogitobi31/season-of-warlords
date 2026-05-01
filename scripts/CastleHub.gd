@@ -5,9 +5,14 @@ extends Control
 @onready var castle_people_label: Label = $MainMargin/MainVBox/CenterHBox/SideInfoVBox/CastlePeoplePanel/CastlePeopleLabel
 @onready var chapter_progress_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ChapterProgressPanel/ChapterProgressLabel
 @onready var status_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/StatusLabel
-@onready var leon_dialogue_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/RpgDialoguePanel/RpgDialogueMargin/RpgDialogueHBox/LeonDialogue
-@onready var dialogue_confirm_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/RpgDialoguePanel/RpgDialogueMargin/RpgDialogueHBox/DialogueConfirmButton
+@onready var dialogue_speaker_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/RpgDialoguePanel/RpgDialogueMargin/RpgDialogueVBox/DialogueTopHBox/SpeakerNameLabel
+@onready var leon_dialogue_label: Label = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/RpgDialoguePanel/RpgDialogueMargin/RpgDialogueVBox/DialogueTextLabel
+@onready var dialogue_confirm_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/RpgDialoguePanel/RpgDialogueMargin/RpgDialogueVBox/DialogueBottomHBox/DialogueConfirmButton
+@onready var courtyard: Control = $MainMargin/MainVBox/CenterHBox/ScenePanel/Courtyard
+@onready var leon_marker: Control = $MainMargin/MainVBox/CenterHBox/ScenePanel/Courtyard/LeonMarker
 @onready var garon_marker: Control = $MainMargin/MainVBox/CenterHBox/ScenePanel/Courtyard/GaronMarker
+@onready var gate_button: Button = $MainMargin/MainVBox/CenterHBox/ScenePanel/Courtyard/GatePlaceholder/GateButton
+@onready var rumor_board_button: Button = $MainMargin/MainVBox/CenterHBox/ScenePanel/Courtyard/RumorBoard/RumorBoardButton
 @onready var expedition_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/ExpeditionButton
 @onready var rumor_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/RumorButton
 @onready var companion_button: Button = $MainMargin/MainVBox/BottomPanel/BottomMargin/BottomVBox/ButtonsHBox/CompanionButton
@@ -45,6 +50,67 @@ func _ready() -> void:
 	rumor_close_button.pressed.connect(_on_close_rumor_pressed)
 	castle_event_confirm_button.pressed.connect(_on_castle_event_confirm_pressed)
 	dialogue_confirm_button.pressed.connect(_on_dialogue_confirm_pressed)
+	gate_button.pressed.connect(_on_expedition_pressed)
+	rumor_board_button.pressed.connect(_on_rumor_pressed)
+	leon_marker.gui_input.connect(_on_leon_marker_gui_input)
+	garon_marker.gui_input.connect(_on_garon_marker_gui_input)
+	build_character_markers()
+
+
+func create_character_sprite(name: String, title: String, body_color: Color) -> Control:
+	var root: Control = Control.new()
+	root.custom_minimum_size = Vector2(120, 128)
+
+	var feet: ColorRect = ColorRect.new()
+	feet.color = body_color.darkened(0.35)
+	feet.position = Vector2(44, 56)
+	feet.size = Vector2(32, 12)
+	root.add_child(feet)
+
+	var body: ColorRect = ColorRect.new()
+	body.color = body_color
+	body.position = Vector2(40, 30)
+	body.size = Vector2(40, 32)
+	root.add_child(body)
+
+	var head: ColorRect = ColorRect.new()
+	head.color = Color(0.88, 0.78, 0.63, 1)
+	head.position = Vector2(46, 10)
+	head.size = Vector2(28, 20)
+	root.add_child(head)
+
+	var name_label: Label = Label.new()
+	name_label.text = name
+	name_label.position = Vector2(0, 78)
+	name_label.size = Vector2(120, 22)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(name_label)
+
+	var title_label: Label = Label.new()
+	title_label.text = title
+	title_label.position = Vector2(0, 98)
+	title_label.size = Vector2(120, 20)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 13)
+	root.add_child(title_label)
+
+	return root
+
+func build_character_markers() -> void:
+	for child: Node in leon_marker.get_children():
+		child.queue_free()
+	for child: Node in garon_marker.get_children():
+		child.queue_free()
+	leon_marker.add_child(create_character_sprite("레온", "청람 기사", Color(0.2, 0.38, 0.8, 1)))
+	garon_marker.add_child(create_character_sprite("가론", "용병대장", Color(0.46, 0.28, 0.2, 1)))
+
+func _on_leon_marker_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_on_coming_soon_pressed("동료 보기")
+
+func _on_garon_marker_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_on_coming_soon_pressed("동료 보기")
 
 func refresh_companions() -> void:
 	var lines: Array[String] = ["동료 목록"]
@@ -154,6 +220,7 @@ func _on_castle_event_confirm_pressed() -> void:
 
 
 func refresh_dialogue_box() -> void:
+	dialogue_speaker_label.text = "레온"
 	if GameState.has_companion_joined("garon"):
 		leon_dialogue_label.text = "주군, 가론이 성문 쪽 순찰을 맡고 있습니다. 다음 출정을 준비하죠."
 		return
