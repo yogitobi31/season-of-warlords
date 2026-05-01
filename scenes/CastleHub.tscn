@@ -446,48 +446,41 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.4)
 
 [node name="PopupPanel" type="Panel" parent="UILayer/InfoPopupOverlay"]
-offset_left = 300.0
-offset_top = 150.0
-offset_right = 980.0
-offset_bottom = 570.0
+offset_left = 320.0
+offset_top = 110.0
+offset_right = 960.0
+offset_bottom = 610.0
 
-[node name="PopupMargin" type="MarginContainer" parent="UILayer/InfoPopupOverlay/PopupPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 12.0
-offset_right = -12.0
-offset_bottom = -12.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="PopupVBox" type="VBoxContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin"]
-layout_mode = 2
-
-[node name="PopupTitleLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
-layout_mode = 2
+[node name="PopupTitleLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 20.0
+offset_right = 600.0
+offset_bottom = 64.0
 theme_override_font_sizes/font_size = 28
 text = "정보"
 
-[node name="PopupBodyScroll" type="ScrollContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
-custom_minimum_size = Vector2(0, 170)
-layout_mode = 2
-size_flags_vertical = 3
+[node name="PopupBodyScroll" type="ScrollContainer" parent="UILayer/InfoPopupOverlay/PopupPanel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 76.0
+offset_right = 600.0
+offset_bottom = 286.0
 
-[node name="PopupBodyLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupBodyScroll"]
+[node name="PopupBodyLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupBodyScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 autowrap_mode = 3
 text = "내용"
 
-[node name="UpgradeInfoPanel" type="Panel" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
-custom_minimum_size = Vector2(0, 92)
-layout_mode = 2
-size_flags_horizontal = 3
+[node name="UpgradeInfoPanel" type="Panel" parent="UILayer/InfoPopupOverlay/PopupPanel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 300.0
+offset_right = 600.0
+offset_bottom = 380.0
 
-[node name="UpgradeInfoMargin" type="MarginContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel"]
+[node name="UpgradeInfoMargin" type="MarginContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/UpgradeInfoPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -499,24 +492,29 @@ offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="UpgradeInfoLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel/UpgradeInfoMargin"]
-custom_minimum_size = Vector2(520, 74)
+[node name="UpgradeInfoLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel/UpgradeInfoPanel/UpgradeInfoMargin"]
+custom_minimum_size = Vector2(520, 64)
 layout_mode = 2
 size_flags_horizontal = 3
 autowrap_mode = 3
 text = "강화 버튼에 마우스를 올리면 비용과 효과가 표시됩니다."
 
-[node name="PopupActionsHBox" type="HBoxContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-size_flags_vertical = 0
+[node name="PopupActionsHBox" type="HBoxContainer" parent="UILayer/InfoPopupOverlay/PopupPanel"]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 392.0
+offset_right = 600.0
+offset_bottom = 434.0
 alignment = 1
-theme_override_constants/separation = 8
+theme_override_constants/separation = 20
 
-[node name="PopupCloseButton" type="Button" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
+[node name="PopupCloseButton" type="Button" parent="UILayer/InfoPopupOverlay/PopupPanel"]
 custom_minimum_size = Vector2(180, 38)
-layout_mode = 2
-size_flags_horizontal = 4
+layout_mode = 0
+offset_left = 230.0
+offset_top = 444.0
+offset_right = 410.0
+offset_bottom = 482.0
 text = "닫기"
 
 [node name="RumorOverlay" type="Control" parent="UILayer"]

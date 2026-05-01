@@ -1,5 +1,15 @@
 extends Node2D
 
+const OBJECTIVE_PANEL_POS: Vector2 = Vector2(24, 20)
+const OBJECTIVE_PANEL_SIZE: Vector2 = Vector2(300, 140)
+const DETAIL_PANEL_POS: Vector2 = Vector2(910, 20)
+const DETAIL_PANEL_SIZE: Vector2 = Vector2(330, 430)
+const COMPANION_PANEL_POS: Vector2 = Vector2(910, 470)
+const COMPANION_PANEL_SIZE: Vector2 = Vector2(330, 180)
+const MAP_AREA_POS: Vector2 = Vector2(24, 180)
+const MAP_AREA_SIZE: Vector2 = Vector2(860, 500)
+const REGION_SIZE: Vector2 = Vector2(160, 76)
+
 var region_nodes: Dictionary = {}
 var info_label: Label
 var region_detail_label: Label
@@ -32,64 +42,67 @@ func _ready() -> void:
 
 func create_ui() -> void:
 	var objective_panel: Panel = Panel.new()
-	objective_panel.position = Vector2(20, 20)
-	objective_panel.size = Vector2(520, 180)
+	objective_panel.position = OBJECTIVE_PANEL_POS
+	objective_panel.size = OBJECTIVE_PANEL_SIZE
 	add_child(objective_panel)
 
 	info_label = Label.new()
-	info_label.position = Vector2(14, 12)
-	info_label.size = Vector2(492, 156)
+	info_label.position = Vector2(12, 10)
+	info_label.size = Vector2(276, 120)
 	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info_label.text = "출정 지도 준비 중..."
 	objective_panel.add_child(info_label)
 
 	var region_panel: Panel = Panel.new()
-	region_panel.position = Vector2(900, 20)
-	region_panel.size = Vector2(360, 350)
+	region_panel.position = DETAIL_PANEL_POS
+	region_panel.size = DETAIL_PANEL_SIZE
 	add_child(region_panel)
 
+	var region_scroll: ScrollContainer = ScrollContainer.new()
+	region_scroll.position = Vector2(10, 10)
+	region_scroll.size = Vector2(310, 410)
+	region_panel.add_child(region_scroll)
+
 	region_detail_label = Label.new()
-	region_detail_label.position = Vector2(12, 10)
-	region_detail_label.size = Vector2(336, 328)
+	region_detail_label.custom_minimum_size = Vector2(296, 396)
+	region_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	region_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	region_detail_label.text = "지역을 선택하면 상세 정보가 표시됩니다."
-	region_panel.add_child(region_detail_label)
+	region_scroll.add_child(region_detail_label)
 
 	var status_panel: Panel = Panel.new()
-	status_panel.position = Vector2(900, 380)
-	status_panel.size = Vector2(360, 220)
+	status_panel.position = COMPANION_PANEL_POS
+	status_panel.size = COMPANION_PANEL_SIZE
 	add_child(status_panel)
 
 	companions_label = Label.new()
 	companions_label.position = Vector2(12, 10)
-	companions_label.size = Vector2(336, 198)
+	companions_label.size = Vector2(306, 160)
 	companions_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	companions_label.text = "동료 정보를 불러오는 중..."
 	status_panel.add_child(companions_label)
 
 	fortress_button = Button.new()
 	fortress_button.text = "성채 보기"
-	fortress_button.position = Vector2(900, 610)
-	fortress_button.size = Vector2(170, 40)
+	fortress_button.position = Vector2(910, 660)
+	fortress_button.size = Vector2(155, 40)
 	fortress_button.pressed.connect(_on_fortress_button_pressed)
 	add_child(fortress_button)
 
 	return_button = Button.new()
 	return_button.text = "성채로 돌아가기"
-	return_button.position = Vector2(1090, 610)
-	return_button.size = Vector2(170, 40)
+	return_button.position = Vector2(1085, 660)
+	return_button.size = Vector2(155, 40)
 	return_button.pressed.connect(_on_return_button_pressed)
 	add_child(return_button)
 
 	fortress_panel = Panel.new()
-	fortress_panel.position = Vector2(900, 660)
-	fortress_panel.size = Vector2(360, 56)
+	fortress_panel.position = Vector2(24, 20)
+	fortress_panel.size = Vector2(860, 140)
 	fortress_panel.visible = false
 	add_child(fortress_panel)
 
 	fortress_label = Label.new()
 	fortress_label.position = Vector2(10, 8)
-	fortress_label.size = Vector2(340, 40)
+	fortress_label.size = Vector2(840, 124)
 	fortress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	fortress_panel.add_child(fortress_label)
 
@@ -135,7 +148,7 @@ func spawn_regions() -> void:
 	for region_id in GameState.regions.keys():
 		var data: Dictionary = GameState.regions[region_id]
 		var node: RegionNode = RegionNode.new()
-		node.position = data["pos"]
+		node.position = _get_region_position(data)
 		node.setup(region_id, data["name"], GameState.get_region_owner(region_id), data["adjacent"])
 		node.set_region_meta(str(data.get("danger", "보통")), false)
 		node.region_clicked.connect(_on_region_clicked)
@@ -160,7 +173,7 @@ func refresh_regions() -> void:
 		node.set_attackable(_is_attackable_from_selection(region_id))
 
 func refresh_companions_panel() -> void:
-	var lines: Array[String] = ["동료"]
+	var lines: Array[String] = ["동료:"]
 	for companion_variant: Variant in GameState.get_companions_list():
 		var companion: Dictionary = companion_variant
 		if companion.get("joined", false):
@@ -171,6 +184,9 @@ func refresh_companions_panel() -> void:
 			])
 		else:
 			lines.append("%s 미합류" % companion.get("name", "?"))
+	lines.append("")
+	lines.append("병종:")
+	lines.append("보병 / 창병 / 방패보병")
 	companions_label.text = "\n".join(lines)
 
 func refresh_fortress_panel() -> void:
@@ -202,7 +218,6 @@ func show_default_message() -> void:
 			lines.append("")
 	lines.append("현재 목표:")
 	lines.append(_get_current_goal_text())
-	lines.append("")
 	lines.append("조작:")
 	lines.append("청람 지역 선택 → 인접 지역 선택")
 	info_label.text = "\n".join(lines)
@@ -368,7 +383,7 @@ func _is_attackable_from_selection(region_id: String) -> bool:
 
 func _get_current_goal_text() -> String:
 	if not GameState.has_companion_joined("garon"):
-		return "가론을 찾기 전, 주변 소규모 지역에서 병력을 성장시키세요."
+		return "가론을 찾기 전, 주변 지역에서 병력을 성장시키세요."
 	if not GameState.has_companion_joined("elin"):
 		return "서리숲 관문의 숲의 사수를 찾아 전력을 보강하세요."
 	if not GameState.has_companion_joined("mira"):
@@ -386,7 +401,7 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 	lines.append("위험도: %s" % str(region_data.get("danger", "보통")))
 	lines.append("권장 준비: %s" % str(region_data.get("recommended", "기본 병력")))
 	lines.append("전투 유형: %s" % str(region_data.get("encounter_type", "미상")))
-	lines.append("예상 적 병종: %s" % enemy_preview)
+	lines.append("예상 적: %s" % enemy_preview)
 	lines.append("획득 보상: %s" % reward_text)
 	lines.append("보상 성격: %s" % str(region_data.get("economy_role", "일반")))
 	lines.append("활용 팁: %s" % str(region_data.get("suggested_use", "전력을 점검하고 출정하세요.")))
@@ -402,7 +417,7 @@ func create_route_lines() -> void:
 	for region_id_variant: Variant in GameState.regions.keys():
 		var region_id: String = str(region_id_variant)
 		var region_data: Dictionary = GameState.regions.get(region_id, {})
-		var from_pos: Vector2 = region_data.get("pos", Vector2.ZERO) + Vector2(80, 38)
+		var from_pos: Vector2 = _get_region_position(region_data) + (REGION_SIZE * 0.5)
 		for adjacent_variant: Variant in region_data.get("adjacent", []):
 			var adjacent_id: String = str(adjacent_variant)
 			var edge_a: String = "%s-%s" % [region_id, adjacent_id]
@@ -412,7 +427,7 @@ func create_route_lines() -> void:
 			var adjacent_data: Dictionary = GameState.regions.get(adjacent_id, {})
 			if adjacent_data.is_empty():
 				continue
-			var to_pos: Vector2 = adjacent_data.get("pos", Vector2.ZERO) + Vector2(80, 38)
+			var to_pos: Vector2 = _get_region_position(adjacent_data) + (REGION_SIZE * 0.5)
 			var route_line: Line2D = Line2D.new()
 			route_line.default_color = Color(0.8, 0.82, 0.9, 0.35)
 			route_line.width = 2.0
@@ -420,6 +435,17 @@ func create_route_lines() -> void:
 			route_line.add_point(to_pos)
 			line_layer.add_child(route_line)
 			drawn_edges[edge_a] = true
+
+
+func _get_region_position(region_data: Dictionary) -> Vector2:
+	var original_pos: Vector2 = region_data.get("pos", MAP_AREA_POS)
+	var min_x: float = MAP_AREA_POS.x
+	var min_y: float = MAP_AREA_POS.y
+	var max_x: float = MAP_AREA_POS.x + MAP_AREA_SIZE.x - REGION_SIZE.x
+	var max_y: float = MAP_AREA_POS.y + MAP_AREA_SIZE.y - REGION_SIZE.y
+	var clamped_x: float = clampf(original_pos.x, min_x, max_x)
+	var clamped_y: float = clampf(original_pos.y, min_y, max_y)
+	return Vector2(clamped_x, clamped_y)
 
 func _format_expected_enemy_classes(region_data: Dictionary) -> String:
 	var names: Array[String] = []

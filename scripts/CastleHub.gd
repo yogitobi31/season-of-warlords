@@ -24,12 +24,12 @@ extends Control
 @onready var manage_button: Button = $UILayer/TopMenu/ManageButton
 
 @onready var info_popup_overlay: Control = $UILayer/InfoPopupOverlay
-@onready var popup_title_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupTitleLabel
-@onready var popup_body_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupBodyScroll/PopupBodyLabel
-@onready var popup_actions_container: HBoxContainer = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupActionsHBox
-@onready var popup_close_button: Button = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupCloseButton
-@onready var upgrade_info_panel: Panel = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel
-@onready var upgrade_info_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel/UpgradeInfoMargin/UpgradeInfoLabel
+@onready var popup_title_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupTitleLabel
+@onready var popup_body_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupBodyScroll/PopupBodyLabel
+@onready var popup_actions_container: HBoxContainer = $UILayer/InfoPopupOverlay/PopupPanel/PopupActionsHBox
+@onready var popup_close_button: Button = $UILayer/InfoPopupOverlay/PopupPanel/PopupCloseButton
+@onready var upgrade_info_panel: Panel = $UILayer/InfoPopupOverlay/PopupPanel/UpgradeInfoPanel
+@onready var upgrade_info_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/UpgradeInfoPanel/UpgradeInfoMargin/UpgradeInfoLabel
 
 @onready var rumor_overlay: Control = $UILayer/RumorOverlay
 @onready var rumor_title_label: Label = $UILayer/RumorOverlay/RumorPanel/RumorMargin/RumorVBox/RumorTitleLabel
@@ -83,8 +83,8 @@ func _ready() -> void:
 func setup_manage_buttons() -> void:
 	upgrade_barracks_button = Button.new()
 	upgrade_barracks_button.text = "병영 강화"
-	upgrade_barracks_button.custom_minimum_size = Vector2(140, 40)
-	upgrade_barracks_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	upgrade_barracks_button.custom_minimum_size = Vector2(160, 38)
+	upgrade_barracks_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	upgrade_barracks_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	upgrade_barracks_button.pressed.connect(_on_upgrade_barracks_pressed)
 	upgrade_barracks_button.mouse_entered.connect(_on_upgrade_barracks_mouse_entered)
@@ -93,8 +93,8 @@ func setup_manage_buttons() -> void:
 
 	upgrade_training_button = Button.new()
 	upgrade_training_button.text = "훈련장 강화"
-	upgrade_training_button.custom_minimum_size = Vector2(140, 40)
-	upgrade_training_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	upgrade_training_button.custom_minimum_size = Vector2(160, 38)
+	upgrade_training_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	upgrade_training_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	upgrade_training_button.pressed.connect(_on_upgrade_training_pressed)
 	upgrade_training_button.mouse_entered.connect(_on_upgrade_training_mouse_entered)
@@ -103,8 +103,8 @@ func setup_manage_buttons() -> void:
 
 	upgrade_lodging_button = Button.new()
 	upgrade_lodging_button.text = "숙소 강화"
-	upgrade_lodging_button.custom_minimum_size = Vector2(140, 40)
-	upgrade_lodging_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	upgrade_lodging_button.custom_minimum_size = Vector2(160, 38)
+	upgrade_lodging_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	upgrade_lodging_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	upgrade_lodging_button.pressed.connect(_on_upgrade_lodging_pressed)
 	upgrade_lodging_button.mouse_entered.connect(_on_upgrade_lodging_mouse_entered)
@@ -294,8 +294,9 @@ func build_manage_text() -> String:
 	lines.append("- 훈련장: 일반 병사 공격력 증가")
 	lines.append("- 숙소: 부대 사기 보너스 증가")
 	lines.append("")
-	lines.append("안내")
-	lines.append("- 아래 강화 버튼에 마우스를 올리면 비용과 효과가 표시됩니다.")
+	lines.append("추천")
+	lines.append("- 부족한 자원은 주변 소규모 지역에서 확보하세요.")
+	lines.append("- 강화 전, 아래 버튼에 마우스를 올려 비용과 효과를 확인하세요.")
 	return "\n".join(lines)
 
 func refresh_upgrade_button_tooltips() -> void:
