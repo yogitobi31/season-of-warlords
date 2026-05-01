@@ -18,6 +18,7 @@ var story_event_result_active: bool = false
 var story_event_result_speaker: String = ""
 var story_event_result_text: String = ""
 var story_event_join_message: String = ""
+var story_event_result_battle_message: String = ""
 
 func _ready() -> void:
 	create_ui()
@@ -223,17 +224,25 @@ func refresh_story_event_panel() -> void:
 	move_child(event_panel, get_child_count() - 1)
 
 func _on_story_choice_selected(choice_index: int) -> void:
+	var resolved_event_id: String = GameState.pending_story_event_id
 	var recruit_message: String = GameState.resolve_pending_story_event(choice_index)
-	_activate_story_result(recruit_message)
+	_activate_story_result(resolved_event_id, recruit_message)
 	refresh_story_event_panel()
 
-func _activate_story_result(recruit_message: String) -> void:
+func _activate_story_result(event_id: String, recruit_message: String) -> void:
 	if recruit_message == "":
 		return
 	story_event_result_active = true
-	story_event_result_speaker = "가론"
-	story_event_result_text = "\"좋다. 네 말이 거짓인지 아닌지는 전장에서 확인하겠다.\"\n\"하지만 적어도, 도망치지 않는 눈은 마음에 드는군.\"\n\"가론. 오늘부터 내 검은 청람의 깃발 아래에 선다.\""
-	story_event_join_message = "가론이 동료로 합류했습니다!"
+	if event_id == "recruit_elin":
+		story_event_result_speaker = "엘린"
+		story_event_result_text = "\"네가 한 말, 쉽게 믿지는 않겠어.\"\n\"하지만 오늘 전장에서 네가 도망치지 않는 건 봤다.\"\n\"서리숲의 길은 내가 열어줄게.\"\n\"엘린. 오늘부터 청람 성채와 함께 싸우겠다.\""
+		story_event_join_message = "엘린이 동료로 합류했습니다!"
+		story_event_result_battle_message = "엘린이 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
+	else:
+		story_event_result_speaker = "가론"
+		story_event_result_text = "\"좋다. 네 말이 거짓인지 아닌지는 전장에서 확인하겠다.\"\n\"하지만 적어도, 도망치지 않는 눈은 마음에 드는군.\"\n\"가론. 오늘부터 내 검은 청람의 깃발 아래에 선다.\""
+		story_event_join_message = "가론이 동료로 합류했습니다!"
+		story_event_result_battle_message = "가론이 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
 
 func _show_story_result_panel() -> void:
 	for child in event_choices_container.get_children():
@@ -255,8 +264,8 @@ func _show_story_result_panel() -> void:
 
 func _on_story_result_confirmed() -> void:
 	story_event_result_active = false
-	GameState.last_battle_message = "가론이 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
-	info_label.text = "가론이 합류했습니다. 성채로 돌아가 새 동료를 맞이하세요."
+	GameState.last_battle_message = story_event_result_battle_message
+	info_label.text = story_event_result_battle_message
 	refresh_companions_panel()
 	refresh_fortress_panel()
 	refresh_story_event_panel()
