@@ -38,3 +38,19 @@ assets/pixel/castlehub/
 - PNG가 아직 없으면 기존 placeholder fallback이 안전하게 표시되어야 합니다.
 - 오브젝트 위에는 짧은 이름만 표시합니다. 예: 레온, 게시판, 성문, 훈련장, 관리.
 - 행동 문구는 오브젝트 위가 아니라 하단 대화창 또는 contextual command menu에 표시합니다.
+
+## Generating temporary assets
+
+Run:
+
+```bash
+python tools/generate_temp_pixel_assets.py
+```
+
+Then commit generated PNGs locally if needed:
+
+```bash
+git add assets/pixel/castlehub
+git commit -m "Add generated temporary CastleHub pixel assets"
+git push
+```
