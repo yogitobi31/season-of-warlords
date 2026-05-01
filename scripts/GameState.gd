@@ -3,18 +3,20 @@ extends Node
 # 전역 게임 상태를 보관하는 오토로드 싱글톤입니다.
 # 월드맵/전투 씬 모두 이 데이터를 공유합니다.
 
-const PLAYER_FACTION := 0
+const PLAYER_FACTION: int = 0
+const CRIMSON_DUCHY_FACTION: int = 1
+const GREEN_MARQUIS_FACTION: int = 2
 const FACTION_NAMES := {
-	0: "청람 왕국",
-	1: "진홍 공국",
-	2: "녹림 변경백령"
+	PLAYER_FACTION: "청람 왕국",
+	CRIMSON_DUCHY_FACTION: "진홍 공국",
+	GREEN_MARQUIS_FACTION: "녹림 변경백령"
 }
 
 # 각 세력의 기본 색상입니다. (월드맵/지역 노드 표시용)
 const FACTION_COLORS := {
-	0: Color("3f7cff"),
-	1: Color("d84a4a"),
-	2: Color("4caf50")
+	PLAYER_FACTION: Color("3f7cff"),
+	CRIMSON_DUCHY_FACTION: Color("d84a4a"),
+	GREEN_MARQUIS_FACTION: Color("4caf50")
 }
 
 const COMPANION_EXP_PER_WIN: int = 30
