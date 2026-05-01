@@ -8,7 +8,7 @@ signal region_clicked(region_id: String)
 @export var owner_faction: int = 0
 @export var adjacent_regions: Array = []
 
-const REGION_SIZE := Vector2(140, 60)
+const REGION_SIZE := Vector2(132, 60)
 
 var is_selected: bool = false
 var is_attackable: bool = false
@@ -78,10 +78,10 @@ func update_visual() -> void:
 	var border_width: int = 2
 	if is_selected:
 		border_color = Color(1.0, 0.95, 0.1)
-		border_width = 6
+		border_width = 4
 	elif is_attackable:
 		border_color = Color(1.0, 0.65, 0.0)
-		border_width = 5
+		border_width = 4
 
 	if is_rumor_target:
 		border_color = Color(1.0, 0.9, 0.2)

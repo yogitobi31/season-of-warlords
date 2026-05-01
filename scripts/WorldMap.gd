@@ -1,14 +1,14 @@
 extends Node2D
 
-const OBJECTIVE_PANEL_POS: Vector2 = Vector2(24, 20)
-const OBJECTIVE_PANEL_SIZE: Vector2 = Vector2(300, 140)
-const DETAIL_PANEL_POS: Vector2 = Vector2(930, 20)
+const OBJECTIVE_PANEL_POS: Vector2 = Vector2(30, 35)
+const OBJECTIVE_PANEL_SIZE: Vector2 = Vector2(300, 150)
+const DETAIL_PANEL_POS: Vector2 = Vector2(935, 35)
 const DETAIL_PANEL_SIZE: Vector2 = Vector2(330, 430)
-const COMPANION_PANEL_POS: Vector2 = Vector2(930, 470)
-const COMPANION_PANEL_SIZE: Vector2 = Vector2(330, 180)
-const MAP_AREA_POS: Vector2 = Vector2(300, 180)
-const MAP_AREA_SIZE: Vector2 = Vector2(600, 500)
-const REGION_SIZE: Vector2 = Vector2(140, 60)
+const COMPANION_PANEL_POS: Vector2 = Vector2(935, 485)
+const COMPANION_PANEL_SIZE: Vector2 = Vector2(330, 150)
+const MAP_AREA_POS: Vector2 = Vector2(340, 120)
+const MAP_AREA_SIZE: Vector2 = Vector2(560, 560)
+const REGION_SIZE: Vector2 = Vector2(132, 60)
 
 var region_nodes: Dictionary = {}
 var info_label: Label
@@ -76,20 +76,20 @@ func create_ui() -> void:
 
 	companions_label = Label.new()
 	companions_label.position = Vector2(12, 10)
-	companions_label.size = Vector2(306, 160)
+	companions_label.size = Vector2(306, 130)
 	companions_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_panel.add_child(companions_label)
 
 	fortress_button = Button.new()
 	fortress_button.text = "성채 보기"
-	fortress_button.position = Vector2(930, 660)
+	fortress_button.position = Vector2(935, 650)
 	fortress_button.size = Vector2(155, 40)
 	fortress_button.pressed.connect(_on_fortress_button_pressed)
 	add_child(fortress_button)
 
 	return_button = Button.new()
 	return_button.text = "성채로 돌아가기"
-	return_button.position = Vector2(1105, 660)
+	return_button.position = Vector2(1110, 650)
 	return_button.size = Vector2(155, 40)
 	return_button.pressed.connect(_on_return_button_pressed)
 	add_child(return_button)
@@ -316,6 +316,7 @@ func _on_story_result_confirmed() -> void:
 	refresh_story_event_panel()
 
 func _on_region_clicked(region_id: String) -> void:
+	refresh_region_detail_panel(region_id)
 	var region_owner: int = GameState.get_region_owner(region_id)
 	var region_data: Dictionary = GameState.regions.get(region_id, {})
 	var danger_text: String = str(region_data.get("danger", "보통"))
@@ -332,7 +333,6 @@ func _on_region_clicked(region_id: String) -> void:
 		select_hint += "\n보상 성격: %s" % focus_text
 	if suggested_use_text != "":
 		select_hint += "\n활용 팁: %s" % suggested_use_text
-	region_detail_label.text = _format_region_detail(region_id, region_data, reward_text, enemy_class_preview)
 	if GameState.has_pending_story_event():
 		info_label.text = "진행 중인 동료 이벤트를 먼저 선택하세요."
 		refresh_regions()
@@ -368,6 +368,12 @@ func _on_region_clicked(region_id: String) -> void:
 	GameState.set_battle_context(GameState.selected_region_id, region_id)
 	info_label.text = "공격 대상: %s\n%s" % [GameState.get_region_name(region_id), select_hint]
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
+
+func refresh_region_detail_panel(region_id: String) -> void:
+	var region_data: Dictionary = GameState.regions.get(region_id, {})
+	var enemy_preview: String = _format_expected_enemy_classes(region_data)
+	var reward_text: String = GameState.format_reward_text(region_data.get("reward", {}))
+	region_detail_label.text = _format_region_detail(region_id, region_data, reward_text, enemy_preview)
 
 func _on_fortress_button_pressed() -> void:
 	fortress_panel.visible = not fortress_panel.visible
