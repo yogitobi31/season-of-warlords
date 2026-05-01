@@ -1,28 +1,23 @@
 extends RefCounted
 class_name RegionData
 
-# MVP용 고정 지역 데이터입니다.
-# id: 고유 식별자
-# name: 표시 이름
-# owner: 초기 소유 세력
-# pos: 월드맵에서의 표시 좌표
-# adjacent: 인접 지역 목록
-#
-# 세계관 기준:
-# - 삼국지 지명이 아니라 중세 판타지 변경 영지/성채/항구/산맥 분위기를 사용합니다.
-# - 삼국지3는 세력 운영 참고작이고, 실제 컨셉 비중은 퍼스트퀸4식 실시간 부대 전투에 더 가깝습니다.
-
 static func get_regions() -> Dictionary:
 	return {
-		"r1": {"name": "청람 성채", "owner": 0, "pos": Vector2(220, 180), "adjacent": ["r2", "r4"], "danger": "낮음", "recommended": "기본 병력", "reward": {"gold": 40, "materials": 10, "renown": 0, "companion_exp": 20}},
-		"r2": {"name": "북부 감시요새", "owner": 1, "pos": Vector2(460, 160), "adjacent": ["r1", "r3", "r5", "s1"], "danger": "보통", "recommended": "병영 Lv.2", "reward": {"gold": 90, "materials": 25, "renown": 8, "companion_exp": 35}},
-		"r3": {"name": "서리숲 관문", "owner": 1, "pos": Vector2(730, 210), "adjacent": ["r2", "r6", "s3"], "danger": "높음", "recommended": "훈련장 Lv.2", "reward": {"gold": 100, "materials": 30, "renown": 12, "companion_exp": 40}},
-		"r4": {"name": "서부 협곡로", "owner": 0, "pos": Vector2(290, 410), "adjacent": ["r1", "r5", "r7", "s2"], "danger": "보통", "recommended": "병영 Lv.2", "reward": {"gold": 70, "materials": 20, "renown": 4, "companion_exp": 30}},
-		"r5": {"name": "중앙 평원", "owner": 2, "pos": Vector2(560, 390), "adjacent": ["r2", "r4", "r6", "r8"], "danger": "높음", "recommended": "병영 Lv.2 + 훈련장 Lv.2", "reward": {"gold": 120, "materials": 35, "renown": 10, "companion_exp": 45}},
-		"r6": {"name": "남해 항구", "owner": 2, "pos": Vector2(860, 390), "adjacent": ["r3", "r5"], "danger": "높음", "recommended": "훈련장 Lv.2", "reward": {"gold": 110, "materials": 28, "renown": 9, "companion_exp": 42}},
-		"r7": {"name": "고대 유적지", "owner": 0, "pos": Vector2(240, 610), "adjacent": ["r4", "r8"], "danger": "보통", "recommended": "숙소 Lv.1", "reward": {"gold": 80, "materials": 18, "renown": 5, "companion_exp": 30}},
-		"r8": {"name": "녹림 산맥", "owner": 2, "pos": Vector2(540, 610), "adjacent": ["r5", "r7"], "danger": "높음", "recommended": "병영 Lv.2 + 숙소 Lv.2", "reward": {"gold": 130, "materials": 40, "renown": 13, "companion_exp": 48}},
-		"s1": {"name": "버려진 광산", "owner": 1, "pos": Vector2(430, 40), "adjacent": ["r2"], "danger": "낮음", "recommended": "기본 병력", "reward": {"gold": 30, "materials": 55, "renown": 2, "companion_exp": 20}},
-		"s2": {"name": "난민 수레길", "owner": 2, "pos": Vector2(120, 470), "adjacent": ["r4"], "danger": "낮음", "recommended": "숙소 Lv.1", "reward": {"gold": 35, "materials": 12, "renown": 18, "companion_exp": 22}},
-		"s3": {"name": "늑대 숲", "owner": 2, "pos": Vector2(930, 220), "adjacent": ["r3"], "danger": "보통", "recommended": "훈련장 Lv.1", "reward": {"gold": 85, "materials": 16, "renown": 6, "companion_exp": 34}}
+		"r1": {"name": "청람 성채", "owner": 0, "pos": Vector2(220, 180), "adjacent": ["t1", "t2", "t3", "t4", "t5", "r2", "r4"], "danger": "낮음", "recommended": "기본 병력", "encounter_type": "castle", "expected_enemy_classes": ["infantry"], "reward_preview": "거점 정비", "reward": {"gold": 40, "materials": 10, "renown": 0, "companion_exp": 20}},
+		"t1": {"name": "낡은 훈련장", "owner": 1, "pos": Vector2(335, 120), "adjacent": ["r1", "t2", "t6"], "danger": "매우 낮음", "recommended": "기본 병력 / 훈련", "encounter_type": "training", "expected_enemy_classes": ["infantry"], "reward_preview": "소량 Gold + 동료 EXP, 창병 해금", "unlock_class": "spearman", "reward": {"gold": 35, "materials": 8, "renown": 1, "companion_exp": 24}},
+		"t2": {"name": "버려진 농가", "owner": 2, "pos": Vector2(360, 235), "adjacent": ["r1", "t1", "t4", "r2"], "danger": "낮음", "recommended": "기본 병력", "encounter_type": "bandit", "expected_enemy_classes": ["infantry"], "reward_preview": "Gold + 보급", "reward": {"gold": 45, "materials": 10, "renown": 2, "companion_exp": 22}},
+		"t3": {"name": "무너진 초소", "owner": 1, "pos": Vector2(250, 70), "adjacent": ["r1", "t1", "r2"], "danger": "낮음", "recommended": "기본 병력 + 전열 유지", "encounter_type": "frontier", "expected_enemy_classes": ["infantry", "archer"], "reward_preview": "재료 + 방패보병 해금", "unlock_class": "shieldbearer", "reward": {"gold": 30, "materials": 28, "renown": 2, "companion_exp": 20}},
+		"t4": {"name": "들개 숲길", "owner": 2, "pos": Vector2(245, 275), "adjacent": ["r1", "t2", "t5", "r4"], "danger": "낮음", "recommended": "훈련장 Lv.1", "encounter_type": "beast", "expected_enemy_classes": ["cavalry", "infantry"], "reward_preview": "보급 + 경험치", "reward": {"gold": 28, "materials": 12, "renown": 2, "companion_exp": 28}},
+		"t5": {"name": "난민 야영지", "owner": 0, "pos": Vector2(145, 300), "adjacent": ["r1", "t4", "r4"], "danger": "이벤트", "recommended": "보급 여유 확보", "encounter_type": "quest", "expected_enemy_classes": ["infantry"], "reward_preview": "명성 + 후속 클레릭 단서", "reward": {"gold": 18, "materials": 8, "renown": 10, "companion_exp": 16}},
+		"t6": {"name": "붉은 깃발 정찰대", "owner": 1, "pos": Vector2(420, 105), "adjacent": ["t1", "r2"], "danger": "보통", "recommended": "창병/방패보병 1개 이상", "encounter_type": "crimson_scout", "expected_enemy_classes": ["infantry", "archer"], "reward_preview": "Gold + 재료 + 명성", "reward": {"gold": 62, "materials": 20, "renown": 6, "companion_exp": 30}},
+		"r2": {"name": "북부 감시요새", "owner": 1, "pos": Vector2(460, 160), "adjacent": ["r1", "t2", "t3", "t6", "r3", "r5", "s1"], "danger": "보통", "recommended": "병영 Lv.2 / 방패보병 준비", "encounter_type": "fortress", "expected_enemy_classes": ["infantry", "shieldbearer", "archer"], "reward_preview": "가론 합류 이벤트", "reward": {"gold": 90, "materials": 25, "renown": 8, "companion_exp": 35}},
+		"r3": {"name": "서리숲 관문", "owner": 1, "pos": Vector2(730, 210), "adjacent": ["r2", "r6", "s3"], "danger": "높음", "recommended": "훈련장 Lv.2", "encounter_type": "frontier", "expected_enemy_classes": ["archer", "infantry"], "reward": {"gold": 100, "materials": 30, "renown": 12, "companion_exp": 40}},
+		"r4": {"name": "서부 협곡로", "owner": 0, "pos": Vector2(290, 410), "adjacent": ["r1", "t4", "t5", "r5", "r7", "s2"], "danger": "보통", "recommended": "병영 Lv.2", "encounter_type": "frontier", "expected_enemy_classes": ["infantry"], "reward": {"gold": 70, "materials": 20, "renown": 4, "companion_exp": 30}},
+		"r5": {"name": "중앙 평원", "owner": 2, "pos": Vector2(560, 390), "adjacent": ["r2", "r4", "r6", "r8"], "danger": "높음", "recommended": "병영 Lv.2 + 훈련장 Lv.2", "encounter_type": "field", "expected_enemy_classes": ["infantry", "cavalry"], "reward": {"gold": 120, "materials": 35, "renown": 10, "companion_exp": 45}},
+		"r6": {"name": "남해 항구", "owner": 2, "pos": Vector2(860, 390), "adjacent": ["r3", "r5"], "danger": "높음", "recommended": "훈련장 Lv.2", "encounter_type": "coast", "expected_enemy_classes": ["infantry", "archer"], "reward": {"gold": 110, "materials": 28, "renown": 9, "companion_exp": 42}},
+		"r7": {"name": "고대 유적지", "owner": 0, "pos": Vector2(240, 610), "adjacent": ["r4", "r8"], "danger": "보통", "recommended": "숙소 Lv.1", "encounter_type": "ruin", "expected_enemy_classes": ["infantry", "sorcerer"], "reward": {"gold": 80, "materials": 18, "renown": 5, "companion_exp": 30}},
+		"r8": {"name": "녹림 산맥", "owner": 2, "pos": Vector2(540, 610), "adjacent": ["r5", "r7"], "danger": "높음", "recommended": "병영 Lv.2 + 숙소 Lv.2", "encounter_type": "mountain", "expected_enemy_classes": ["infantry", "archer", "cavalry"], "reward": {"gold": 130, "materials": 40, "renown": 13, "companion_exp": 48}},
+		"s1": {"name": "버려진 광산", "owner": 1, "pos": Vector2(430, 40), "adjacent": ["r2"], "danger": "낮음", "recommended": "기본 병력", "encounter_type": "bandit", "expected_enemy_classes": ["infantry"], "reward": {"gold": 30, "materials": 55, "renown": 2, "companion_exp": 20}},
+		"s2": {"name": "난민 수레길", "owner": 2, "pos": Vector2(120, 470), "adjacent": ["r4"], "danger": "낮음", "recommended": "숙소 Lv.1", "encounter_type": "quest", "expected_enemy_classes": ["infantry"], "reward": {"gold": 35, "materials": 12, "renown": 18, "companion_exp": 22}},
+		"s3": {"name": "늑대 숲", "owner": 2, "pos": Vector2(930, 220), "adjacent": ["r3"], "danger": "보통", "recommended": "훈련장 Lv.1", "encounter_type": "beast", "expected_enemy_classes": ["cavalry", "infantry"], "reward": {"gold": 85, "materials": 16, "renown": 6, "companion_exp": 34}}
 	}
