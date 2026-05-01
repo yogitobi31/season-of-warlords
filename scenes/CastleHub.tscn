@@ -472,7 +472,7 @@ theme_override_font_sizes/font_size = 28
 text = "정보"
 
 [node name="PopupBodyScroll" type="ScrollContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
-custom_minimum_size = Vector2(0, 250)
+custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -482,13 +482,41 @@ size_flags_horizontal = 3
 autowrap_mode = 3
 text = "내용"
 
-[node name="PopupActionsHBox" type="HBoxContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
+[node name="UpgradeInfoPanel" type="Panel" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
+custom_minimum_size = Vector2(0, 92)
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UpgradeInfoMargin" type="MarginContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = -10.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="UpgradeInfoLabel" type="Label" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel/UpgradeInfoMargin"]
+custom_minimum_size = Vector2(520, 74)
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 3
+text = "강화 버튼에 마우스를 올리면 비용과 효과가 표시됩니다."
+
+[node name="PopupActionsHBox" type="HBoxContainer" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_vertical = 0
 alignment = 1
 theme_override_constants/separation = 8
 
 [node name="PopupCloseButton" type="Button" parent="UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox"]
+custom_minimum_size = Vector2(180, 38)
 layout_mode = 2
+size_flags_horizontal = 4
 text = "닫기"
 
 [node name="RumorOverlay" type="Control" parent="UILayer"]

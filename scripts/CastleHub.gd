@@ -28,6 +28,8 @@ extends Control
 @onready var popup_body_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupBodyScroll/PopupBodyLabel
 @onready var popup_actions_container: HBoxContainer = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupActionsHBox
 @onready var popup_close_button: Button = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/PopupCloseButton
+@onready var upgrade_info_panel: Panel = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel
+@onready var upgrade_info_label: Label = $UILayer/InfoPopupOverlay/PopupPanel/PopupMargin/PopupVBox/UpgradeInfoPanel/UpgradeInfoMargin/UpgradeInfoLabel
 
 @onready var rumor_overlay: Control = $UILayer/RumorOverlay
 @onready var rumor_title_label: Label = $UILayer/RumorOverlay/RumorPanel/RumorMargin/RumorVBox/RumorTitleLabel
@@ -47,8 +49,8 @@ var opening_active: bool = false
 var upgrade_barracks_button: Button
 var upgrade_training_button: Button
 var upgrade_lodging_button: Button
-var manage_tooltip_hint_label: Label
 var current_popup_mode: String = ""
+var hovered_upgrade_key: String = ""
 
 func _ready() -> void:
 	build_character_markers()
@@ -81,28 +83,35 @@ func _ready() -> void:
 func setup_manage_buttons() -> void:
 	upgrade_barracks_button = Button.new()
 	upgrade_barracks_button.text = "병영 강화"
-	upgrade_barracks_button.custom_minimum_size = Vector2(0, 34)
+	upgrade_barracks_button.custom_minimum_size = Vector2(140, 40)
+	upgrade_barracks_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	upgrade_barracks_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	upgrade_barracks_button.pressed.connect(_on_upgrade_barracks_pressed)
+	upgrade_barracks_button.mouse_entered.connect(_on_upgrade_barracks_mouse_entered)
+	upgrade_barracks_button.mouse_exited.connect(_on_upgrade_button_mouse_exited)
 	popup_actions_container.add_child(upgrade_barracks_button)
 
 	upgrade_training_button = Button.new()
 	upgrade_training_button.text = "훈련장 강화"
-	upgrade_training_button.custom_minimum_size = Vector2(0, 34)
+	upgrade_training_button.custom_minimum_size = Vector2(140, 40)
+	upgrade_training_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	upgrade_training_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	upgrade_training_button.pressed.connect(_on_upgrade_training_pressed)
+	upgrade_training_button.mouse_entered.connect(_on_upgrade_training_mouse_entered)
+	upgrade_training_button.mouse_exited.connect(_on_upgrade_button_mouse_exited)
 	popup_actions_container.add_child(upgrade_training_button)
 
 	upgrade_lodging_button = Button.new()
 	upgrade_lodging_button.text = "숙소 강화"
-	upgrade_lodging_button.custom_minimum_size = Vector2(0, 34)
+	upgrade_lodging_button.custom_minimum_size = Vector2(140, 40)
+	upgrade_lodging_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	upgrade_lodging_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	upgrade_lodging_button.pressed.connect(_on_upgrade_lodging_pressed)
+	upgrade_lodging_button.mouse_entered.connect(_on_upgrade_lodging_mouse_entered)
+	upgrade_lodging_button.mouse_exited.connect(_on_upgrade_button_mouse_exited)
 	popup_actions_container.add_child(upgrade_lodging_button)
-
-	manage_tooltip_hint_label = Label.new()
-	manage_tooltip_hint_label.text = "강화 버튼에 마우스를 올리면 비용과 효과를 확인할 수 있습니다."
-	manage_tooltip_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	manage_tooltip_hint_label.custom_minimum_size = Vector2(0, 28)
-	popup_actions_container.add_child(manage_tooltip_hint_label)
-	refresh_upgrade_tooltips()
+	hide_upgrade_info()
+	refresh_upgrade_button_tooltips()
 
 func create_character_sprite(character_name: String, character_title: String, body_color: Color) -> Control:
 	var root: Control = Control.new()
@@ -238,9 +247,10 @@ func show_popup(title: String, body: String, mode: String = "generic") -> void:
 	upgrade_barracks_button.visible = is_manage_mode
 	upgrade_training_button.visible = is_manage_mode
 	upgrade_lodging_button.visible = is_manage_mode
-	manage_tooltip_hint_label.visible = is_manage_mode
+	upgrade_info_panel.visible = is_manage_mode
 	if is_manage_mode:
-		refresh_upgrade_tooltips()
+		hide_upgrade_info()
+		refresh_upgrade_button_tooltips()
 	info_popup_overlay.visible = true
 
 func _on_close_info_popup_pressed() -> void:
@@ -267,41 +277,28 @@ func build_facilities_text() -> String:
 	return "\n".join(lines)
 
 func build_manage_text() -> String:
-	var cost_barracks: Dictionary = GameState.get_upgrade_cost("barracks")
-	var cost_training: Dictionary = GameState.get_upgrade_cost("training_ground")
-	var cost_lodging: Dictionary = GameState.get_upgrade_cost("lodging")
 	var lines: Array[String] = []
-	lines.append("현재 자원:")
+	lines.append("현재 자원")
 	lines.append("- 금화: %d" % GameState.gold)
 	lines.append("- 보급: %d" % GameState.supplies)
 	lines.append("- 자재: %d" % GameState.materials)
 	lines.append("- 명성: %d" % GameState.renown)
 	lines.append("")
-	lines.append("시설:")
+	lines.append("시설 현황")
 	lines.append("- 병영 Lv.%d" % GameState.barracks_level)
 	lines.append("- 훈련장 Lv.%d" % GameState.training_ground_level)
 	lines.append("- 숙소 Lv.%d" % GameState.lodging_level)
 	lines.append("")
-	lines.append("강화 효과:")
+	lines.append("강화 효과")
 	lines.append("- 병영: 일반 병사 HP 증가")
 	lines.append("- 훈련장: 일반 병사 공격력 증가")
-	lines.append("- 숙소: 사기 보너스 증가")
+	lines.append("- 숙소: 부대 사기 보너스 증가")
 	lines.append("")
-	lines.append("다음 비용:")
-	lines.append("- 병영 강화: 금화 %d / 자재 %d" % [int(cost_barracks.get("gold", 0)), int(cost_barracks.get("materials", 0))])
-	lines.append("- 훈련장 강화: 금화 %d / 자재 %d" % [int(cost_training.get("gold", 0)), int(cost_training.get("materials", 0))])
-	lines.append("- 숙소 강화: 금화 %d / 자재 %d" % [int(cost_lodging.get("gold", 0)), int(cost_lodging.get("materials", 0))])
-	lines.append("")
-	lines.append("추천:")
-	if GameState.barracks_level < 2:
-		lines.append("- 북부 감시요새 전에는 병영 Lv.2 추천")
-	if not GameState.is_unit_class_unlocked("shieldbearer"):
-		lines.append("- 무너진 초소 점령 시 방패보병 해금")
-	if not GameState.is_unit_class_unlocked("spearman"):
-		lines.append("- 낡은 훈련장 정리 시 창병 해금")
+	lines.append("안내")
+	lines.append("- 아래 강화 버튼에 마우스를 올리면 비용과 효과가 표시됩니다.")
 	return "\n".join(lines)
 
-func refresh_upgrade_tooltips() -> void:
+func refresh_upgrade_button_tooltips() -> void:
 	upgrade_barracks_button.tooltip_text = build_upgrade_tooltip("barracks")
 	upgrade_training_button.tooltip_text = build_upgrade_tooltip("training_ground")
 	upgrade_lodging_button.tooltip_text = build_upgrade_tooltip("lodging")
@@ -321,6 +318,18 @@ func build_upgrade_tooltip(upgrade_key: String) -> String:
 	lines.append("보유 자원: 금화 %d / 자재 %d" % [GameState.gold, GameState.materials])
 	lines.append("자원 충분" if enough_resources else "자원 부족")
 	return "\n".join(lines)
+
+func show_upgrade_info(upgrade_key: String) -> void:
+	hovered_upgrade_key = upgrade_key
+	var cost: Dictionary = GameState.get_upgrade_cost(upgrade_key)
+	var need_gold: int = int(cost.get("gold", 0))
+	var need_materials: int = int(cost.get("materials", 0))
+	var enough_resources: bool = GameState.gold >= need_gold and GameState.materials >= need_materials
+	upgrade_info_label.text = "%s\n비용: 금화 %d / 자재 %d\n효과: %s\n현재 보너스: %s → 강화 후: %s\n보유 자원: 금화 %d / 자재 %d / 상태: %s" % [get_upgrade_display_name(upgrade_key), need_gold, need_materials, get_upgrade_effect_text(upgrade_key), get_upgrade_current_bonus_text(upgrade_key), get_upgrade_next_bonus_text(upgrade_key), GameState.gold, GameState.materials, "강화 가능" if enough_resources else "자원 부족"]
+
+func hide_upgrade_info() -> void:
+	hovered_upgrade_key = ""
+	upgrade_info_label.text = "강화 버튼에 마우스를 올리면 비용과 효과가 표시됩니다."
 
 func get_upgrade_display_name(upgrade_key: String) -> String:
 	match upgrade_key:
@@ -392,7 +401,24 @@ func _try_upgrade(upgrade_key: String) -> void:
 		show_popup("성채 관리 - 강화 성공", build_manage_text(), "manage")
 	else:
 		show_popup("성채 관리 - 자원 부족", build_manage_text(), "manage")
-	refresh_upgrade_tooltips()
+	refresh_upgrade_button_tooltips()
+	if current_popup_mode == "manage":
+		if hovered_upgrade_key == upgrade_key:
+			show_upgrade_info(upgrade_key)
+		else:
+			hide_upgrade_info()
+
+func _on_upgrade_barracks_mouse_entered() -> void:
+	show_upgrade_info("barracks")
+
+func _on_upgrade_training_mouse_entered() -> void:
+	show_upgrade_info("training_ground")
+
+func _on_upgrade_lodging_mouse_entered() -> void:
+	show_upgrade_info("lodging")
+
+func _on_upgrade_button_mouse_exited() -> void:
+	hide_upgrade_info()
 
 func build_castle_people_text() -> String:
 	var lines: Array[String] = ["성채 인물"]
