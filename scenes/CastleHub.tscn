@@ -37,6 +37,32 @@ offset_bottom = 360.0
 grow_horizontal = 2
 color = Color(0.3, 0.33, 0.38, 1)
 
+[node name="Keep" type="Panel" parent="SceneRoot"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -280.0
+offset_top = 80.0
+offset_right = 280.0
+offset_bottom = 330.0
+grow_horizontal = 2
+
+[node name="KeepLabel" type="Label" parent="SceneRoot/Keep"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -34.0
+offset_right = 120.0
+offset_bottom = -8.0
+grow_horizontal = 2
+text = "청람 성채 본관"
+horizontal_alignment = 1
+
 [node name="Floor" type="ColorRect" parent="SceneRoot"]
 layout_mode = 1
 anchors_preset = 15
@@ -46,6 +72,15 @@ offset_top = 360.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.41, 0.36, 0.28, 1)
+
+[node name="StoneTiles" type="ColorRect" parent="SceneRoot"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 350.0
+offset_bottom = 610.0
+grow_horizontal = 2
+color = Color(0.45, 0.45, 0.48, 0.45)
 
 [node name="Gate" type="Panel" parent="SceneRoot"]
 custom_minimum_size = Vector2(260, 210)
@@ -185,6 +220,76 @@ offset_top = 178.0
 offset_right = 1188.0
 offset_bottom = 214.0
 color = Color(0.22, 0.45, 0.85, 1)
+
+[node name="TorchLeft" type="ColorRect" parent="SceneRoot"]
+layout_mode = 1
+offset_left = 210.0
+offset_top = 300.0
+offset_right = 230.0
+offset_bottom = 360.0
+color = Color(0.15, 0.11, 0.07, 1)
+
+[node name="TorchLeftFire" type="ColorRect" parent="SceneRoot"]
+layout_mode = 1
+offset_left = 205.0
+offset_top = 280.0
+offset_right = 235.0
+offset_bottom = 310.0
+color = Color(0.96, 0.69, 0.26, 0.95)
+
+[node name="TorchRight" type="ColorRect" parent="SceneRoot"]
+layout_mode = 1
+offset_left = 1050.0
+offset_top = 300.0
+offset_right = 1070.0
+offset_bottom = 360.0
+color = Color(0.15, 0.11, 0.07, 1)
+
+[node name="TorchRightFire" type="ColorRect" parent="SceneRoot"]
+layout_mode = 1
+offset_left = 1045.0
+offset_top = 280.0
+offset_right = 1075.0
+offset_bottom = 310.0
+color = Color(0.96, 0.69, 0.26, 0.95)
+
+[node name="CrateA" type="ColorRect" parent="SceneRoot"]
+layout_mode = 1
+offset_left = 880.0
+offset_top = 560.0
+offset_right = 930.0
+offset_bottom = 610.0
+color = Color(0.42, 0.29, 0.17, 1)
+
+[node name="CrateB" type="ColorRect" parent="SceneRoot"]
+layout_mode = 1
+offset_left = 935.0
+offset_top = 575.0
+offset_right = 980.0
+offset_bottom = 620.0
+color = Color(0.38, 0.26, 0.15, 1)
+
+[node name="TrainingDummy" type="Panel" parent="SceneRoot"]
+layout_mode = 1
+offset_left = 120.0
+offset_top = 500.0
+offset_right = 180.0
+offset_bottom = 620.0
+
+[node name="TrainingDummyLabel" type="Label" parent="SceneRoot/TrainingDummy"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -70.0
+offset_top = -28.0
+offset_right = 70.0
+offset_bottom = -8.0
+grow_horizontal = 2
+text = "훈련 목각"
+horizontal_alignment = 1
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 

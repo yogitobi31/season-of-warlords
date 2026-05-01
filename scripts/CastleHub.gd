@@ -35,6 +35,9 @@ extends Control
 @onready var castle_event_confirm_button: Button = $UILayer/CastleEventOverlay/CastleEventPanel/Margin/VBox/ConfirmButton
 
 var rumor_panel_rumor_id: String = ""
+var opening_lines: Array[String] = []
+var opening_index: int = 0
+var opening_active: bool = false
 
 func _ready() -> void:
 	build_character_markers()
@@ -57,6 +60,8 @@ func _ready() -> void:
 	rumor_close_button.pressed.connect(_on_close_rumor_pressed)
 	castle_event_confirm_button.pressed.connect(_on_castle_event_confirm_pressed)
 	dialogue_confirm_button.pressed.connect(_on_dialogue_confirm_pressed)
+	setup_opening_lines()
+	start_opening_if_needed()
 
 func create_character_sprite(character_name: String, character_title: String, body_color: Color) -> Control:
 	var root: Control = Control.new()
@@ -110,13 +115,19 @@ func build_character_markers() -> void:
 	garon_marker.move_child(garon_button, garon_marker.get_child_count() - 1)
 
 func _on_expedition_pressed() -> void:
+	if opening_active:
+		return
 	get_tree().change_scene_to_file("res://scenes/WorldMap.tscn")
 
 func _on_rumor_pressed() -> void:
+	if opening_active:
+		return
 	refresh_rumor_panel()
 	rumor_overlay.visible = true
 
 func _on_leon_pressed() -> void:
+	if opening_active:
+		return
 	dialogue_speaker_label.text = "레온"
 	if GameState.has_companion_joined("garon"):
 		dialogue_text_label.text = "주군, 가론이 성문 쪽 순찰을 맡고 있습니다. 다음 출정을 준비하죠."
@@ -125,6 +136,8 @@ func _on_leon_pressed() -> void:
 	dialogue_panel.visible = true
 
 func _on_garon_pressed() -> void:
+	if opening_active:
+		return
 	if not GameState.has_companion_joined("garon"):
 		return
 	dialogue_speaker_label.text = "가론"
@@ -132,12 +145,19 @@ func _on_garon_pressed() -> void:
 	dialogue_panel.visible = true
 
 func _on_dialogue_confirm_pressed() -> void:
+	if opening_active:
+		advance_opening()
+		return
 	dialogue_panel.visible = false
 
 func _on_companion_popup_pressed() -> void:
+	if opening_active:
+		return
 	show_popup("동료 보기", build_companion_text())
 
 func _on_manage_popup_pressed() -> void:
+	if opening_active:
+		return
 	show_popup("성채 관리", build_facilities_text() + "\n\n" + build_castle_people_text())
 
 func show_popup(title: String, body: String) -> void:
@@ -212,6 +232,8 @@ func refresh_rumor_panel() -> void:
 	rumor_track_button.disabled = bool(rumor_data.get("completed", false))
 
 func _on_track_rumor_pressed() -> void:
+	if opening_active:
+		return
 	if rumor_panel_rumor_id != "" and GameState.track_rumor(rumor_panel_rumor_id):
 		refresh_status_message()
 	rumor_overlay.visible = false
@@ -231,9 +253,53 @@ func refresh_castle_event_panel() -> void:
 	castle_event_overlay.visible = true
 
 func _on_castle_event_confirm_pressed() -> void:
+	if opening_active:
+		return
 	if GameState.pending_castle_event_id == "garon_arrival":
 		GameState.complete_castle_event("garon_arrival")
 	refresh_castle_event_panel()
 	refresh_rumor_panel()
 	refresh_quest_log()
 	refresh_courtyard_people()
+
+func setup_opening_lines() -> void:
+	opening_lines = [
+		"오래전, 청람 왕국은 북방의 작은 성채 하나만을 남긴 채 무너졌다.",
+		"진홍 공국의 깃발은 날마다 가까워지고, 성채의 병사들은 지쳐 있었다.",
+		"하지만 아직 청람의 깃발은 내려가지 않았다.",
+		"레온: 주군, 이곳은 낡았지만 아직 끝난 곳은 아닙니다.",
+		"레온: 소문을 따라 사람을 모으고, 전장에서 믿음을 증명해야 합니다.",
+		"청람 성채에서 새로운 군웅의 계절이 시작된다."
+	]
+
+func start_opening_if_needed() -> void:
+	if GameState.opening_seen:
+		return
+	opening_active = true
+	opening_index = 0
+	dialogue_panel.visible = true
+	dialogue_speaker_label.text = "청람의 기록"
+	dialogue_confirm_button.text = "계속"
+	show_opening_line()
+
+func show_opening_line() -> void:
+	if opening_index < 0 or opening_index >= opening_lines.size():
+		return
+	dialogue_text_label.text = opening_lines[opening_index]
+	if opening_index == opening_lines.size() - 1:
+		dialogue_confirm_button.text = "시작"
+	else:
+		dialogue_confirm_button.text = "계속"
+
+func advance_opening() -> void:
+	opening_index += 1
+	if opening_index >= opening_lines.size():
+		end_opening()
+		return
+	show_opening_line()
+
+func end_opening() -> void:
+	opening_active = false
+	GameState.opening_seen = true
+	dialogue_panel.visible = false
+	dialogue_confirm_button.text = "확인"

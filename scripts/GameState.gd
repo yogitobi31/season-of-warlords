@@ -34,6 +34,7 @@ var completed_story_events: Dictionary = {}
 var pending_story_event_id: String = ""
 var pending_castle_event_id: String = ""
 var completed_castle_events: Array[String] = []
+var opening_seen: bool = false
 
 var active_rumor_id: String = ""
 var rumors: Dictionary = {}
