@@ -94,6 +94,10 @@ theme_override_constants/separation = 12
 layout_mode = 2
 text = "출정하기"
 
+[node name="RumorButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
+layout_mode = 2
+text = "소문 듣기"
+
 [node name="CompanionButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
 layout_mode = 2
 text = "동료 보기"
@@ -105,3 +109,41 @@ text = "성채 관리"
 [node name="RestButton" type="Button" parent="Margin/RootVBox/ButtonsHBox"]
 layout_mode = 2
 text = "휴식하기"
+
+[node name="RumorPanel" type="Panel" parent="Margin/RootVBox"]
+visible = false
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+
+[node name="RumorTitleLabel" type="Label" parent="Margin/RootVBox/RumorPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 1100.0
+offset_bottom = 42.0
+text = "북부 감시요새의 용병대장"
+
+[node name="RumorBodyLabel" type="Label" parent="Margin/RootVBox/RumorPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 48.0
+offset_right = 1100.0
+offset_bottom = 166.0
+autowrap_mode = 3
+text = ""
+
+[node name="RumorButtonsHBox" type="HBoxContainer" parent="Margin/RootVBox/RumorPanel"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 176.0
+offset_right = 520.0
+offset_bottom = 212.0
+theme_override_constants/separation = 12
+
+[node name="TrackRumorButton" type="Button" parent="Margin/RootVBox/RumorPanel/RumorButtonsHBox"]
+layout_mode = 2
+text = "이 소문을 추적한다"
+
+[node name="CloseRumorButton" type="Button" parent="Margin/RootVBox/RumorPanel/RumorButtonsHBox"]
+layout_mode = 2
+text = "닫기"

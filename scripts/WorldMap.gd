@@ -99,6 +99,11 @@ func spawn_regions() -> void:
 func refresh_regions() -> void:
 	for region_id in region_nodes.keys():
 		var node: RegionNode = region_nodes[region_id]
+		var region_name: String = GameState.get_region_name(region_id)
+		if GameState.active_rumor_id == "rumor_garon" and region_id == "r2":
+			node.region_name = "[소문 목표] %s" % region_name
+		else:
+			node.region_name = region_name
 		node.update_owner(GameState.get_region_owner(region_id))
 		node.set_selected(region_id == GameState.selected_region_id)
 		node.set_attackable(_is_attackable_from_selection(region_id))
@@ -133,7 +138,16 @@ func show_default_message() -> void:
 	var result_text: String = ""
 	if GameState.last_battle_message != "":
 		result_text = "직전 전투 결과:\n%s\n\n" % GameState.last_battle_message
-	info_label.text = result_text + "출정 지도: 청람 왕국의 세력을 확장할 지역을 선택하세요.\n청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
+	var rumor_lines: Array[String] = []
+	if GameState.active_rumor_id != "":
+		var active_rumor: Dictionary = GameState.get_active_rumor()
+		if not active_rumor.is_empty():
+			rumor_lines.append("현재 추적 중인 소문: %s" % str(active_rumor.get("title", "")))
+			var target_region_id: String = str(active_rumor.get("target_region_id", ""))
+			rumor_lines.append("목표: %s" % GameState.get_region_name(target_region_id))
+			rumor_lines.append("")
+	var base_text: String = "출정 지도: 목표 지역을 선택하세요.\n청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
+	info_label.text = result_text + "\n".join(rumor_lines) + base_text
 
 func refresh_story_event_panel() -> void:
 	for child in event_choices_container.get_children():
