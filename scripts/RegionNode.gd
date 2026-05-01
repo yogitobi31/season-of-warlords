@@ -8,7 +8,7 @@ signal region_clicked(region_id: String)
 @export var owner_faction: int = 0
 @export var adjacent_regions: Array = []
 
-const REGION_SIZE := Vector2(132, 60)
+const REGION_SIZE := Vector2(124, 56)
 
 var is_selected: bool = false
 var is_attackable: bool = false
@@ -75,18 +75,18 @@ func update_visual() -> void:
 		base_color = GameState.FACTION_COLORS.get(owner_faction, Color.DIM_GRAY)
 
 	var border_color: Color = Color(0.08, 0.08, 0.08)
-	var border_width: int = 2
+	var border_width: int = 1
 	if is_selected:
 		border_color = Color(1.0, 0.95, 0.1)
-		border_width = 4
+		border_width = 3
 	elif is_attackable:
 		border_color = Color(1.0, 0.65, 0.0)
-		border_width = 4
+		border_width = 3
 
 	if is_rumor_target:
 		border_color = Color(1.0, 0.9, 0.2)
-		if border_width < 4:
-			border_width = 4
+		if border_width < 3:
+			border_width = 3
 
 	if owner_faction == GameState.PLAYER_FACTION:
 		base_color = Color(0.18, 0.35, 0.76)
@@ -119,6 +119,7 @@ func update_visual() -> void:
 	add_theme_color_override("font_pressed_color", Color.WHITE)
 	add_theme_color_override("font_focus_color", Color.WHITE)
 	add_theme_font_size_override("font_size", 14)
+	add_theme_constant_override("line_spacing", 2)
 	text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 
 func _on_pressed() -> void:
