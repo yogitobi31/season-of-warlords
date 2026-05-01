@@ -65,13 +65,13 @@ var hovered_upgrade_key: String = ""
 func _ready() -> void:
 	build_character_markers()
 	refresh_quest_log()
-	refresh_status_message()
 	refresh_rumor_panel()
 	refresh_courtyard_people()
 	GameState.update_pending_castle_event()
 	refresh_castle_event_panel()
 	build_hub_layout()
 	configure_scene_layout()
+	refresh_status_message()
 	refresh_hub_header()
 	select_hub_target("")
 
@@ -477,6 +477,10 @@ func configure_scene_layout() -> void:
 	dialogue_text_label.modulate = Color(0.95, 0.97, 1.0, 1.0)
 
 func refresh_hub_header() -> void:
+	if hub_resource_label == null:
+		return
+	if hub_hint_label == null:
+		return
 	hub_resource_label.text = "금화 %d   보급 %d   자재 %d   명성 %d" % [GameState.gold, GameState.supplies, GameState.materials, GameState.renown]
 	hub_hint_label.text = "목표: %s" % GameState.get_current_objective_text()
 
