@@ -9,6 +9,25 @@ const COMPANION_PANEL_SIZE: Vector2 = Vector2(320, 210)
 const MAP_AREA_POS: Vector2 = Vector2(340, 120)
 const MAP_AREA_SIZE: Vector2 = Vector2(560, 560)
 const REGION_SIZE: Vector2 = RegionNode.CLICK_SIZE
+const REGION_LAYOUT: Dictionary = {
+	"r1": Vector2(560, 430),
+	"t1": Vector2(505, 390),
+	"t2": Vector2(625, 455),
+	"t3": Vector2(500, 320),
+	"t4": Vector2(455, 510),
+	"t5": Vector2(400, 540),
+	"t6": Vector2(740, 360),
+	"r2": Vector2(675, 300),
+	"r3": Vector2(595, 210),
+	"r4": Vector2(505, 585),
+	"r5": Vector2(710, 500),
+	"r6": Vector2(830, 530),
+	"r7": Vector2(395, 455),
+	"r8": Vector2(645, 620),
+	"s1": Vector2(770, 245),
+	"s2": Vector2(355, 610),
+	"s3": Vector2(860, 260)
+}
 # TODO: Keep map markers compact and drive labels from hover/selection per docs/worldmap_ux_spec.md.
 
 var region_nodes: Dictionary = {}
@@ -165,7 +184,7 @@ func spawn_regions() -> void:
 	for region_id in GameState.regions.keys():
 		var data: Dictionary = GameState.regions[region_id]
 		var node: RegionNode = RegionNode.new()
-		node.position = _get_region_position(data)
+		node.position = _get_region_position(region_id, data)
 		node.setup(region_id, data["name"], GameState.get_region_owner(region_id), data["adjacent"])
 		node.set_region_meta(str(data.get("danger", "보통")), false)
 		node.region_clicked.connect(_on_region_clicked)
@@ -452,7 +471,9 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 	var lines: Array[String] = []
 	lines.append("[지역 정보]")
 	lines.append("지역: %s" % GameState.get_region_name(region_id))
-	lines.append("세력: %s" % GameState.FACTION_NAMES.get(GameState.get_region_owner(region_id), "미상"))
+	lines.append("소유 세력: %s" % GameState.FACTION_NAMES.get(GameState.get_region_owner(region_id), "미상"))
+	lines.append("행동 유형: %s" % _get_action_type_display(str(region_data.get("action_type", "conquest"))))
+	lines.append("목표 유형: %s" % _get_objective_type_display(str(region_data.get("objective_type", "rout"))))
 	var event_id: String = GameState.get_region_event_id(region_id)
 	if event_id == "":
 		lines.append("이벤트 상태: 없음")
@@ -462,16 +483,14 @@ func _format_region_detail(region_id: String, region_data: Dictionary, reward_te
 		lines.append("이벤트 상태: 미해결")
 	lines.append("위험도: %s" % str(region_data.get("danger", "보통")))
 	lines.append("")
-	lines.append("[가능 행동]")
-	lines.append("행동 유형: %s" % _get_action_type_display(str(region_data.get("action_type", "conquest"))))
-	lines.append("목표: %s" % _get_objective_type_display(str(region_data.get("objective_type", "rout"))))
+	lines.append("[출정 정보]")
 	lines.append("권장 준비: %s" % str(region_data.get("recommended", "기본 병력")))
 	lines.append("전투 유형: %s" % str(region_data.get("encounter_type", "미상")))
 	lines.append("예상 적: %s" % enemy_preview)
 	lines.append("")
 	lines.append("[사건/조사]")
 	lines.append(str(region_data.get("encounter_flavor", "특이 사항이 없습니다.")))
-	lines.append("특수 규칙: %s" % str(region_data.get("special_rule", "일반 교전")))
+	lines.append("특수 규칙: %s" % _get_special_rule_text(region_id, region_data))
 	lines.append("")
 	lines.append("[획득 보상]")
 	lines.append(reward_text.replace(" / 명성 ", "\n명성 "))
@@ -528,7 +547,7 @@ func _get_action_start_text(action_type: String) -> String:
 	return str(mapping.get(action_type, "이벤트 진행"))
 
 func _get_action_type_display(action_type: String) -> String:
-	var mapping: Dictionary = {"conquest": "점령", "exploration": "조사", "ambush": "매복", "choice": "선택", "training": "훈련", "resource": "자원", "defense": "방어", "rescue": "구출", "escort": "호위", "ritual": "의식"}
+	var mapping: Dictionary = {"conquest": "점령전", "exploration": "조사", "ambush": "매복", "choice": "선택", "training": "훈련", "resource": "자원", "defense": "방어", "rescue": "구조", "escort": "호위", "ritual": "의식 저지"}
 	return str(mapping.get(action_type, action_type))
 
 func _get_objective_type_display(objective_type: String) -> String:
@@ -543,7 +562,7 @@ func create_route_lines() -> void:
 	for region_id_variant: Variant in GameState.regions.keys():
 		var region_id: String = str(region_id_variant)
 		var region_data: Dictionary = GameState.regions.get(region_id, {})
-		var from_pos: Vector2 = _get_region_position(region_data) + (REGION_SIZE * 0.5)
+		var from_pos: Vector2 = _get_region_position(region_id, region_data) + (REGION_SIZE * 0.5)
 		for adjacent_variant: Variant in region_data.get("adjacent", []):
 			var adjacent_id: String = str(adjacent_variant)
 			var edge_a: String = "%s-%s" % [region_id, adjacent_id]
@@ -553,7 +572,7 @@ func create_route_lines() -> void:
 			var adjacent_data: Dictionary = GameState.regions.get(adjacent_id, {})
 			if adjacent_data.is_empty():
 				continue
-			var to_pos: Vector2 = _get_region_position(adjacent_data) + (REGION_SIZE * 0.5)
+			var to_pos: Vector2 = _get_region_position(adjacent_id, adjacent_data) + (REGION_SIZE * 0.5)
 			var route_line: Line2D = Line2D.new()
 			route_line.default_color = Color(0.8, 0.82, 0.9, 0.35)
 			route_line.width = 2.0
@@ -563,8 +582,10 @@ func create_route_lines() -> void:
 			drawn_edges[edge_a] = true
 
 
-func _get_region_position(region_data: Dictionary) -> Vector2:
+func _get_region_position(region_id: String, region_data: Dictionary) -> Vector2:
 	var original_pos: Vector2 = region_data.get("pos", MAP_AREA_POS)
+	if REGION_LAYOUT.has(region_id):
+		original_pos = REGION_LAYOUT[region_id]
 	var min_x: float = MAP_AREA_POS.x
 	var min_y: float = MAP_AREA_POS.y
 	var max_x: float = MAP_AREA_POS.x + MAP_AREA_SIZE.x - REGION_SIZE.x
@@ -572,6 +593,11 @@ func _get_region_position(region_data: Dictionary) -> Vector2:
 	var clamped_x: float = clampf(original_pos.x, min_x, max_x)
 	var clamped_y: float = clampf(original_pos.y, min_y, max_y)
 	return Vector2(clamped_x, clamped_y)
+
+func _get_special_rule_text(region_id: String, region_data: Dictionary) -> String:
+	if region_id == "r7":
+		return "점령 대상이 아니며 소유권이 변하지 않습니다."
+	return str(region_data.get("special_rule", "일반 교전"))
 
 func _format_expected_enemy_classes(region_data: Dictionary) -> String:
 	var names: Array[String] = []
