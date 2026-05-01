@@ -6,6 +6,7 @@ var companions_label: Label
 var fortress_button: Button
 var fortress_panel: Panel
 var fortress_label: Label
+var return_button: Button
 var event_panel: Panel
 var event_title_label: Label
 var event_dialogue_label: Label
@@ -24,7 +25,7 @@ func create_ui() -> void:
 	info_label = Label.new()
 	info_label.position = Vector2(20, 20)
 	info_label.size = Vector2(860, 120)
-	info_label.text = "월드맵 준비 중..."
+	info_label.text = "출정 지도 준비 중..."
 	add_child(info_label)
 
 	companions_label = Label.new()
@@ -39,6 +40,13 @@ func create_ui() -> void:
 	fortress_button.size = Vector2(180, 40)
 	fortress_button.pressed.connect(_on_fortress_button_pressed)
 	add_child(fortress_button)
+
+	return_button = Button.new()
+	return_button.text = "성채로 돌아가기"
+	return_button.position = Vector2(1110, 310)
+	return_button.size = Vector2(160, 40)
+	return_button.pressed.connect(_on_return_button_pressed)
+	add_child(return_button)
 
 	fortress_panel = Panel.new()
 	fortress_panel.position = Vector2(910, 360)
@@ -119,7 +127,7 @@ func show_default_message() -> void:
 	var result_text: String = ""
 	if GameState.last_battle_message != "":
 		result_text = "직전 전투 결과:\n%s\n\n" % GameState.last_battle_message
-	info_label.text = result_text + "청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
+	info_label.text = result_text + "출정 지도: 청람 왕국의 세력을 확장할 지역을 선택하세요.\n청람 왕국 지역을 먼저 클릭한 뒤, 인접한 적 지역을 클릭하세요."
 
 func refresh_story_event_panel() -> void:
 	for child in event_choices_container.get_children():
@@ -203,3 +211,8 @@ func _is_attackable_from_selection(region_id: String) -> bool:
 	if not GameState.is_adjacent(GameState.selected_region_id, region_id):
 		return false
 	return GameState.get_region_owner(region_id) != GameState.PLAYER_FACTION
+
+
+func _on_return_button_pressed() -> void:
+	GameState.clear_selection()
+	get_tree().change_scene_to_file("res://scenes/CastleHub.tscn")
