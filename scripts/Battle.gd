@@ -37,6 +37,7 @@ func create_ui() -> void:
 
 func spawn_teams() -> void:
 	var joined_companions: Array = GameState.get_joined_companions()
+	var front_center_y: float = 360.0
 	var deployed_companions: Array[String] = []
 	var companion_count: int = joined_companions.size()
 	if companion_count > UNITS_PER_TEAM:
@@ -52,13 +53,18 @@ func spawn_teams() -> void:
 			p.level = int(companion.get("level", 1))
 			_apply_companion_stats(p, str(companion.get("id", "")), p.level)
 			deployed_companions.append(p.unit_name)
-		p.global_position = Vector2(180 + i * 22, 170 + (i % 5) * 70)
+		var lane: int = i % 5
+		var row: int = i / 5
+		var hero_offset: float = -12.0 if p.is_companion else 0.0
+		p.global_position = Vector2(250 + row * 60 + hero_offset, front_center_y - 120.0 + float(lane) * 60.0)
 		add_child(p)
 		player_units.append(p)
 
 		var e: Unit = Unit.new()
 		e.team = Unit.TEAM_ENEMY
-		e.global_position = Vector2(1100 - i * 22, 170 + (i % 5) * 70)
+		var enemy_lane: int = i % 5
+		var enemy_row: int = i / 5
+		e.global_position = Vector2(1030 - enemy_row * 56, front_center_y - 125.0 + float(enemy_lane) * 58.0)
 		add_child(e)
 		enemy_units.append(e)
 
