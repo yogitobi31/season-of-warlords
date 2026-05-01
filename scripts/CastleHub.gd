@@ -425,7 +425,7 @@ func refresh_status_message() -> void:
 		status_label.text = "숲의 사수 소문을 추적 중입니다."
 		return
 	if GameState.active_rumor_id == "rumor_mira":
-		status_label.text = "고대 유적지의 푸른 빛 소문을 추적 중입니다."
+		status_label.text = "고대 유적지의 마력 흔적을 조사 중입니다."
 		return
 	status_label.text = ""
 
@@ -448,8 +448,8 @@ func refresh_rumor_panel() -> void:
 		body_text = "\"서리숲 관문 근처에서 진홍 공국의 정찰대를 홀로 막아내는 사수가 있다는 소문이 있습니다.\"\n"
 		body_text += "\"그녀는 숲을 지키기 위해 누구의 깃발도 따르지 않는다고 합니다.\"\n\n관련 동료: 엘린"
 	elif rumor_panel_rumor_id == "rumor_mira":
-		body_text = "\"서부 협곡로 너머 고대 유적지에서 밤마다 푸른 빛이 솟아오른다는 소문이 있습니다.\"\n"
-		body_text += "\"그곳에는 진홍 공국도 녹림 변경백령도 아닌, 홀로 마법서를 지키는 견습 마법사가 있다고 합니다.\"\n\n관련 동료: 미라"
+		body_text = "\"엘린은 청람의 고대 유적지 아래에서 이상한 마력의 흐름을 감지했다고 보고했다.\"\n"
+		body_text += "\"그 땅은 이미 우리의 영지지만, 유적의 침묵 속에는 아직 밝혀지지 않은 무언가가 남아 있다.\"\n\n대상 지역: 고대 유적지\n원정 방식: 조사(Exploration)"
 	else:
 		body_text = "\"새로운 소문이 없습니다.\""
 	if bool(rumor_data.get("completed", false)):
