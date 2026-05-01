@@ -145,6 +145,8 @@ func refresh_companions_panel() -> void:
 func refresh_fortress_panel() -> void:
 	var lines: Array[String] = []
 	lines.append("%s Lv.%d" % [GameState.fortress_data["name"], GameState.fortress_data["level"]])
+	lines.append("자원: Gold %d / 보급 %d / 재료 %d / 명성 %d" % [GameState.gold, GameState.supplies, GameState.materials, GameState.renown])
+	lines.append("강화: 병영 Lv.%d / 훈련장 Lv.%d / 숙소 Lv.%d" % [GameState.barracks_level, GameState.training_ground_level, GameState.lodging_level])
 	lines.append("")
 	lines.append("시설")
 	for facility in GameState.fortress_data["facilities"]:
@@ -252,6 +254,10 @@ func _on_region_clicked(region_id: String) -> void:
 		return
 
 	var region_owner: int = GameState.get_region_owner(region_id)
+	var region_data: Dictionary = GameState.regions.get(region_id, {})
+	var danger_text: String = str(region_data.get("danger", "보통"))
+	var recommended_text: String = str(region_data.get("recommended", "기본 병력"))
+	var select_hint: String = "위험도: %s / 권장 준비: %s" % [danger_text, recommended_text]
 
 	if GameState.selected_region_id == "":
 		if region_owner != GameState.PLAYER_FACTION:
@@ -259,7 +265,7 @@ func _on_region_clicked(region_id: String) -> void:
 			refresh_regions()
 			return
 		GameState.selected_region_id = region_id
-		info_label.text = "선택된 지역: %s\n인접한 적 지역을 선택하세요." % GameState.regions[region_id]["name"]
+		info_label.text = "선택된 지역: %s\n%s\n인접한 적 지역을 선택하세요." % [GameState.regions[region_id]["name"], select_hint]
 		refresh_regions()
 		return
 
@@ -275,11 +281,12 @@ func _on_region_clicked(region_id: String) -> void:
 		return
 
 	if region_owner == GameState.PLAYER_FACTION:
-		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요."
+		info_label.text = "아군 지역입니다. 인접한 적 지역을 선택하세요.\n%s" % select_hint
 		refresh_regions()
 		return
 
 	GameState.set_battle_context(GameState.selected_region_id, region_id)
+	info_label.text = "공격 대상: %s\n%s" % [GameState.get_region_name(region_id), select_hint]
 	get_tree().change_scene_to_file("res://scenes/Battle.tscn")
 
 func _on_fortress_button_pressed() -> void:
