@@ -116,42 +116,17 @@ func initialize_companions() -> void:
 func initialize_story_events() -> void:
 	story_events = {
 		"recruit_garon": {
-			"event_id": "recruit_garon",
+			"id": "recruit_garon",
 			"region_id": "r2",
 			"title": "용병대장 가론",
 			"speaker_name": "가론",
 			"dialogue_lines": [
+				"청람의 깃발이라… 아직도 그 깃발을 들 사람이 남아 있었나.",
 				"나는 약한 군주를 따르지 않는다.",
-				"네가 이 땅을 지킬 각오가 있다면, 내 검을 빌려주겠다."
+				"하지만 백성을 버리지 않는 자라면, 내 검을 빌려줄 수는 있지."
 			],
 			"choices": ["함께 싸워달라.", "백성을 지키기 위해 네 힘이 필요하다."],
 			"recruit_companion_id": "garon",
-			"completed": false
-		},
-		"recruit_elin": {
-			"event_id": "recruit_elin",
-			"region_id": "r3",
-			"title": "서리숲의 엘린",
-			"speaker_name": "엘린",
-			"dialogue_lines": [
-				"숲을 지키는 화살은 누구를 향해야 하지?",
-				"네 전쟁이 약자를 위한 것이라면, 나도 함께하겠다."
-			],
-			"choices": ["네 화살이 필요해.", "함께 숲과 사람들을 지키자."],
-			"recruit_companion_id": "elin",
-			"completed": false
-		},
-		"recruit_mira": {
-			"event_id": "recruit_mira",
-			"region_id": "r7",
-			"title": "고대 유적의 미라",
-			"speaker_name": "미라",
-			"dialogue_lines": [
-				"유적의 금기를 건드릴 용기는 있나요?",
-				"세상을 바꿀 결심이 있다면, 제 마법을 보태드릴게요."
-			],
-			"choices": ["우린 함께 바꿀 수 있어.", "네 지식과 용기가 필요해."],
-			"recruit_companion_id": "mira",
 			"completed": false
 		}
 	}
@@ -225,14 +200,16 @@ func grant_companion_exp_on_victory() -> Array[String]:
 	return level_up_messages
 
 func queue_story_event_by_region(region_id: String) -> void:
-	for event_id in story_events.keys():
-		var event_data: Dictionary = story_events[event_id]
-		if str(event_data.get("region_id", "")) != region_id:
-			continue
-		if event_is_completed(event_id):
-			continue
-		pending_story_event_id = event_id
+	if region_id != "r2":
 		return
+	if not companions.has("garon"):
+		return
+	var garon_data: Dictionary = companions["garon"]
+	if bool(garon_data.get("joined", false)):
+		return
+	if event_is_completed("recruit_garon"):
+		return
+	pending_story_event_id = "recruit_garon"
 
 func event_is_completed(event_id: String) -> bool:
 	if completed_story_events.get(event_id, false):
