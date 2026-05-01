@@ -47,6 +47,7 @@ var opening_active: bool = false
 var upgrade_barracks_button: Button
 var upgrade_training_button: Button
 var upgrade_lodging_button: Button
+var manage_tooltip_hint_label: Label
 var current_popup_mode: String = ""
 
 func _ready() -> void:
@@ -95,6 +96,13 @@ func setup_manage_buttons() -> void:
 	upgrade_lodging_button.custom_minimum_size = Vector2(0, 34)
 	upgrade_lodging_button.pressed.connect(_on_upgrade_lodging_pressed)
 	popup_actions_container.add_child(upgrade_lodging_button)
+
+	manage_tooltip_hint_label = Label.new()
+	manage_tooltip_hint_label.text = "강화 버튼에 마우스를 올리면 비용과 효과를 확인할 수 있습니다."
+	manage_tooltip_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	manage_tooltip_hint_label.custom_minimum_size = Vector2(0, 28)
+	popup_actions_container.add_child(manage_tooltip_hint_label)
+	refresh_upgrade_tooltips()
 
 func create_character_sprite(character_name: String, character_title: String, body_color: Color) -> Control:
 	var root: Control = Control.new()
@@ -230,6 +238,9 @@ func show_popup(title: String, body: String, mode: String = "generic") -> void:
 	upgrade_barracks_button.visible = is_manage_mode
 	upgrade_training_button.visible = is_manage_mode
 	upgrade_lodging_button.visible = is_manage_mode
+	manage_tooltip_hint_label.visible = is_manage_mode
+	if is_manage_mode:
+		refresh_upgrade_tooltips()
 	info_popup_overlay.visible = true
 
 func _on_close_info_popup_pressed() -> void:
@@ -290,6 +301,82 @@ func build_manage_text() -> String:
 		lines.append("- 낡은 훈련장 정리 시 창병 해금")
 	return "\n".join(lines)
 
+func refresh_upgrade_tooltips() -> void:
+	upgrade_barracks_button.tooltip_text = build_upgrade_tooltip("barracks")
+	upgrade_training_button.tooltip_text = build_upgrade_tooltip("training_ground")
+	upgrade_lodging_button.tooltip_text = build_upgrade_tooltip("lodging")
+
+func build_upgrade_tooltip(upgrade_key: String) -> String:
+	var cost: Dictionary = GameState.get_upgrade_cost(upgrade_key)
+	var need_gold: int = int(cost.get("gold", 0))
+	var need_materials: int = int(cost.get("materials", 0))
+	var enough_resources: bool = GameState.gold >= need_gold and GameState.materials >= need_materials
+	var lines: Array[String] = []
+	lines.append(get_upgrade_display_name(upgrade_key))
+	lines.append("비용: 금화 %d / 자재 %d" % [need_gold, need_materials])
+	lines.append("현재 레벨: Lv.%d" % get_upgrade_level(upgrade_key))
+	lines.append("효과: %s" % get_upgrade_effect_text(upgrade_key))
+	lines.append("현재 보너스: %s" % get_upgrade_current_bonus_text(upgrade_key))
+	lines.append("강화 후 보너스: %s" % get_upgrade_next_bonus_text(upgrade_key))
+	lines.append("보유 자원: 금화 %d / 자재 %d" % [GameState.gold, GameState.materials])
+	lines.append("자원 충분" if enough_resources else "자원 부족")
+	return "\n".join(lines)
+
+func get_upgrade_display_name(upgrade_key: String) -> String:
+	match upgrade_key:
+		"barracks":
+			return "병영 강화"
+		"training_ground":
+			return "훈련장 강화"
+		"lodging":
+			return "숙소 강화"
+		_:
+			return "시설 강화"
+
+func get_upgrade_effect_text(upgrade_key: String) -> String:
+	match upgrade_key:
+		"barracks":
+			return "일반 병사의 최대 HP 증가"
+		"training_ground":
+			return "일반 병사의 공격력 증가"
+		"lodging":
+			return "부대 사기 보너스 증가"
+		_:
+			return "전력 보너스"
+
+func get_upgrade_current_bonus_text(upgrade_key: String) -> String:
+	match upgrade_key:
+		"barracks":
+			return "+%.1f" % GameState.get_soldier_hp_bonus()
+		"training_ground":
+			return "+%.1f" % GameState.get_soldier_attack_bonus()
+		"lodging":
+			return "+%.1f" % GameState.get_army_morale_bonus()
+		_:
+			return "+0.0"
+
+func get_upgrade_next_bonus_text(upgrade_key: String) -> String:
+	match upgrade_key:
+		"barracks":
+			return "+%.1f" % (float(GameState.barracks_level) * 18.0)
+		"training_ground":
+			return "+%.1f" % (float(GameState.training_ground_level + 1) * 1.6)
+		"lodging":
+			return "+%.1f" % (float(GameState.lodging_level + 1) * 0.8)
+		_:
+			return "+0.0"
+
+func get_upgrade_level(upgrade_key: String) -> int:
+	match upgrade_key:
+		"barracks":
+			return GameState.barracks_level
+		"training_ground":
+			return GameState.training_ground_level
+		"lodging":
+			return GameState.lodging_level
+		_:
+			return 0
+
 func _on_upgrade_barracks_pressed() -> void:
 	_try_upgrade("barracks")
 
@@ -305,6 +392,7 @@ func _try_upgrade(upgrade_key: String) -> void:
 		show_popup("성채 관리 - 강화 성공", build_manage_text(), "manage")
 	else:
 		show_popup("성채 관리 - 자원 부족", build_manage_text(), "manage")
+	refresh_upgrade_tooltips()
 
 func build_castle_people_text() -> String:
 	var lines: Array[String] = ["성채 인물"]
