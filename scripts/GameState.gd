@@ -33,6 +33,10 @@ var story_events: Dictionary = {}
 var completed_story_events: Dictionary = {}
 var pending_story_event_id: String = ""
 
+var active_rumor_id: String = ""
+var rumors: Dictionary = {}
+var completed_rumors: Array[String] = []
+
 # 기본 성채 데이터 (MVP)
 var fortress_data: Dictionary = {
 	"name": "청람 성채",
@@ -61,6 +65,7 @@ func initialize_regions() -> void:
 		ownership[region_id] = regions[region_id]["owner"]
 	initialize_companions()
 	initialize_story_events()
+	initialize_rumors()
 	clear_selection()
 	last_battle_result = ""
 	last_battle_message = ""
@@ -133,6 +138,52 @@ func initialize_story_events() -> void:
 	completed_story_events.clear()
 	pending_story_event_id = ""
 
+
+func initialize_rumors() -> void:
+	rumors = {
+		"rumor_garon": {
+			"id": "rumor_garon",
+			"title": "북부 감시요새의 용병대장",
+			"target_region_id": "r2",
+			"related_companion_id": "garon",
+			"active": false,
+			"completed": false
+		}
+	}
+	completed_rumors.clear()
+	active_rumor_id = ""
+
+func track_rumor(rumor_id: String) -> bool:
+	if not rumors.has(rumor_id):
+		return false
+	if active_rumor_id != "" and rumors.has(active_rumor_id):
+		var old_rumor: Dictionary = rumors[active_rumor_id]
+		old_rumor["active"] = false
+		rumors[active_rumor_id] = old_rumor
+	var rumor_data: Dictionary = rumors[rumor_id]
+	rumor_data["active"] = true
+	rumor_data["completed"] = bool(rumor_data.get("completed", false))
+	rumors[rumor_id] = rumor_data
+	active_rumor_id = rumor_id
+	return true
+
+func get_active_rumor() -> Dictionary:
+	if active_rumor_id == "":
+		return {}
+	return rumors.get(active_rumor_id, {})
+
+func complete_rumor(rumor_id: String) -> void:
+	if not rumors.has(rumor_id):
+		return
+	var rumor_data: Dictionary = rumors[rumor_id]
+	rumor_data["completed"] = true
+	rumor_data["active"] = false
+	rumors[rumor_id] = rumor_data
+	if not completed_rumors.has(rumor_id):
+		completed_rumors.append(rumor_id)
+	if active_rumor_id == rumor_id:
+		active_rumor_id = ""
+
 func clear_selection() -> void:
 	selected_region_id = ""
 	attack_region_id = ""
@@ -200,6 +251,8 @@ func grant_companion_exp_on_victory() -> Array[String]:
 	return level_up_messages
 
 func queue_story_event_by_region(region_id: String) -> void:
+	if active_rumor_id != "rumor_garon":
+		return
 	if region_id != "r2":
 		return
 	if not companions.has("garon"):
@@ -243,6 +296,8 @@ func resolve_pending_story_event(_choice_index: int) -> String:
 	event_data["completed"] = true
 	story_events[pending_story_event_id] = event_data
 	completed_story_events[pending_story_event_id] = true
+	if pending_story_event_id == "recruit_garon":
+		complete_rumor("rumor_garon")
 	pending_story_event_id = ""
 	return "%s이(가) 동료로 합류했습니다!" % companion_name
 
