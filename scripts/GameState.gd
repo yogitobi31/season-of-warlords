@@ -477,6 +477,13 @@ func get_joined_companions() -> Array:
 			result.append(data)
 	return result
 
+func get_companion_count() -> int:
+	var count: int = 0
+	for data in companions.values():
+		if bool(data.get("joined", false)):
+			count += 1
+	return count
+
 func grant_companion_exp_on_victory(exp_gain: int = COMPANION_EXP_PER_WIN) -> Array[String]:
 	var level_up_messages: Array[String] = []
 	for companion_id in companions.keys():
