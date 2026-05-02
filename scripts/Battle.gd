@@ -1,6 +1,8 @@
 extends Node2D
 
 const UNITS_PER_TEAM: int = 10
+const BASE_ENEMY_COUNT: int = 3
+const ENEMY_SCALE_PER_COMPANION: int = 1
 
 var player_units: Array[Unit] = []
 var enemy_units: Array[Unit] = []
@@ -49,7 +51,7 @@ func spawn_teams() -> void:
 	var morale_bonus: float = GameState.get_army_morale_bonus()
 	var player_composition: Array[String] = GameState.get_player_composition()
 	var enemy_base_classes: Array[String] = GameState.get_region_enemy_classes(GameState.defense_region_id)
-	var companion_count: int = joined_companions.size()
+	var companion_count: int = GameState.get_companion_count()
 	if companion_count > UNITS_PER_TEAM:
 		companion_count = UNITS_PER_TEAM
 
@@ -79,6 +81,9 @@ func spawn_teams() -> void:
 		add_child(p)
 		player_units.append(p)
 
+	var enemy_count: int = BASE_ENEMY_COUNT + (companion_count * ENEMY_SCALE_PER_COMPANION)
+	print("[Battle] companion_count=%d enemy_count=%d" % [companion_count, enemy_count])
+	for i: int in range(enemy_count):
 		var e: Unit = Unit.new()
 		e.team = Unit.TEAM_ENEMY
 		var enemy_class_id: String = enemy_base_classes[i % enemy_base_classes.size()]
