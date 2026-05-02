@@ -58,6 +58,7 @@ var contextual_primary_button: Button
 var contextual_close_button: Button
 var selected_target_id: String = ""
 const DEFAULT_COURTYARD_TEXT: String = "청람 성채 안뜰이다. 소문 게시판을 확인하거나 성문을 통해 출정할 수 있다."
+const NORMAL_HUB_HINT_TEXT: String = "G/Enter: 출정하기   R: 소문 게시판   Esc: 닫기"
 const CASTLE_HUB_PIXEL_ASSET_ROOT: String = "res://assets/pixel/castlehub/"
 const CASTLE_HUB_REQUIRED_TEXTURE_PATHS: Array[String] = [
 	"res://assets/pixel/castlehub/characters/leon_idle.png",
@@ -321,12 +322,14 @@ func build_character_markers() -> void:
 func _on_gate_selected() -> void:
 	if opening_active:
 		return
-	select_hub_target("gate")
+	if is_any_overlay_open():
+		return
+	_on_expedition_pressed()
 
 func _on_rumor_board_selected() -> void:
 	if opening_active:
 		return
-	select_hub_target("rumor")
+	_on_rumor_pressed()
 
 func _on_expedition_pressed() -> void:
 	if opening_active:
@@ -561,7 +564,7 @@ func build_hub_layout() -> void:
 
 	hub_hint_label = Label.new()
 	hub_hint_label.position = Vector2(20, 34)
-	hub_hint_label.size = Vector2(620, 20)
+	hub_hint_label.size = Vector2(860, 20)
 	hub_hint_label.add_theme_font_size_override("font_size", 14)
 	$UILayer.add_child(hub_hint_label)
 
@@ -611,7 +614,7 @@ func enter_normal_hub_mode() -> void:
 	$UILayer/TopMenu.visible = true
 	$UILayer/QuestLogPanel.visible = true
 	status_label.visible = true
-	dialogue_panel.visible = true
+	dialogue_panel.visible = false
 	dialogue_speaker_label.visible = false
 	dialogue_confirm_button.visible = false
 	dialogue_confirm_button.disabled = true
@@ -627,7 +630,7 @@ func refresh_hub_header() -> void:
 	if hub_hint_label == null:
 		return
 	hub_resource_label.text = "금화 %d   보급 %d   자재 %d   명성 %d" % [GameState.gold, GameState.supplies, GameState.materials, GameState.renown]
-	hub_hint_label.text = "목표: %s" % GameState.get_current_objective_text()
+	hub_hint_label.text = NORMAL_HUB_HINT_TEXT
 
 func select_hub_target(target_id: String) -> void:
 	selected_target_id = target_id
@@ -815,9 +818,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					get_viewport().set_input_as_handled()
 					return
 				KEY_G, KEY_ENTER, KEY_KP_ENTER:
-					_on_expedition_pressed()
-					get_viewport().set_input_as_handled()
-					return
+					if not is_any_overlay_open():
+						_on_expedition_pressed()
+						get_viewport().set_input_as_handled()
+						return
 				KEY_ESCAPE:
 					if rumor_overlay.visible:
 						_on_close_rumor_pressed()
@@ -853,6 +857,9 @@ func is_opening_advance_input(event: InputEvent) -> bool:
 		var mouse_event: InputEventMouseButton = event
 		return mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.double_click
 	return false
+
+func is_any_overlay_open() -> bool:
+	return rumor_overlay.visible or info_popup_overlay.visible or castle_event_overlay.visible or contextual_menu_panel.visible
 
 func _on_castle_event_confirm_pressed() -> void:
 	if opening_active:
