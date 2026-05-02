@@ -601,9 +601,25 @@ func configure_scene_layout() -> void:
 	dialogue_panel.self_modulate = Color(0.05, 0.07, 0.11, 0.86)
 	dialogue_speaker_label.visible = false
 	dialogue_confirm_button.visible = false
+	dialogue_confirm_button.disabled = true
 	dialogue_text_label.custom_minimum_size = Vector2(0, 120)
 	dialogue_text_label.add_theme_font_size_override("font_size", 24)
 	dialogue_text_label.modulate = Color(0.95, 0.97, 1.0, 1.0)
+
+func enter_normal_hub_mode() -> void:
+	opening_active = false
+	$UILayer/TopMenu.visible = true
+	$UILayer/QuestLogPanel.visible = true
+	status_label.visible = true
+	dialogue_panel.visible = true
+	dialogue_speaker_label.visible = false
+	dialogue_confirm_button.visible = false
+	dialogue_confirm_button.disabled = true
+	dialogue_text_label.text = DEFAULT_COURTYARD_TEXT
+	refresh_hub_header()
+	refresh_quest_log()
+	refresh_status_message()
+	select_hub_target("")
 
 func refresh_hub_header() -> void:
 	if hub_resource_label == null:
@@ -787,12 +803,45 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	if opening_active:
+		return
+
+	if event is InputEventKey:
+		var key_event: InputEventKey = event
+		if key_event.pressed and not key_event.echo:
+			match key_event.keycode:
+				KEY_R:
+					_on_rumor_pressed()
+					get_viewport().set_input_as_handled()
+					return
+				KEY_G, KEY_ENTER, KEY_KP_ENTER:
+					_on_expedition_pressed()
+					get_viewport().set_input_as_handled()
+					return
+				KEY_ESCAPE:
+					if rumor_overlay.visible:
+						_on_close_rumor_pressed()
+					elif info_popup_overlay.visible:
+						_on_close_info_popup_pressed()
+					elif contextual_menu_panel.visible:
+						select_hub_target("")
+					get_viewport().set_input_as_handled()
+					return
+
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if not info_popup_overlay.visible and not rumor_overlay.visible and not castle_event_overlay.visible and not opening_active:
+		if not info_popup_overlay.visible and not rumor_overlay.visible and not castle_event_overlay.visible:
 			select_hub_target("")
-	if event.is_action_pressed("ui_cancel") and info_popup_overlay.visible and not opening_active:
-		_on_close_info_popup_pressed()
-		get_viewport().set_input_as_handled()
+
+	if event.is_action_pressed("ui_cancel"):
+		if rumor_overlay.visible:
+			_on_close_rumor_pressed()
+			get_viewport().set_input_as_handled()
+		elif info_popup_overlay.visible:
+			_on_close_info_popup_pressed()
+			get_viewport().set_input_as_handled()
+		elif contextual_menu_panel.visible:
+			select_hub_target("")
+			get_viewport().set_input_as_handled()
 
 func is_opening_advance_input(event: InputEvent) -> bool:
 	if event is InputEventKey:
@@ -832,15 +881,14 @@ func setup_opening_lines() -> void:
 
 func start_opening_if_needed() -> void:
 	if GameState.opening_seen:
-		dialogue_panel.visible = true
-		dialogue_confirm_button.visible = false
-		select_hub_target("")
+		enter_normal_hub_mode()
 		return
 	opening_active = true
 	opening_index = 0
 	dialogue_panel.visible = true
 	dialogue_speaker_label.text = "청람의 기록"
 	dialogue_confirm_button.visible = true
+	dialogue_confirm_button.disabled = false
 	dialogue_confirm_button.text = "계속"
 	show_opening_line()
 
@@ -861,9 +909,5 @@ func advance_opening() -> void:
 	show_opening_line()
 
 func end_opening() -> void:
-	opening_active = false
 	GameState.opening_seen = true
-	dialogue_confirm_button.visible = false
-	dialogue_confirm_button.text = "확인"
-	dialogue_panel.visible = true
-	select_hub_target("")
+	enter_normal_hub_mode()
