@@ -782,12 +782,28 @@ func refresh_castle_event_panel() -> void:
 	castle_event_overlay.visible = false
 
 func _unhandled_input(event: InputEvent) -> void:
+	if opening_active and is_opening_advance_input(event):
+		advance_opening()
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not info_popup_overlay.visible and not rumor_overlay.visible and not castle_event_overlay.visible and not opening_active:
 			select_hub_target("")
 	if event.is_action_pressed("ui_cancel") and info_popup_overlay.visible and not opening_active:
 		_on_close_info_popup_pressed()
 		get_viewport().set_input_as_handled()
+
+func is_opening_advance_input(event: InputEvent) -> bool:
+	if event is InputEventKey:
+		var key_event: InputEventKey = event
+		if not key_event.pressed or key_event.echo:
+			return false
+		return key_event.keycode == KEY_ENTER or key_event.keycode == KEY_KP_ENTER or key_event.keycode == KEY_SPACE
+	if event is InputEventMouseButton:
+		var mouse_event: InputEventMouseButton = event
+		return mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.double_click
+	return false
 
 func _on_castle_event_confirm_pressed() -> void:
 	if opening_active:
@@ -816,11 +832,15 @@ func setup_opening_lines() -> void:
 
 func start_opening_if_needed() -> void:
 	if GameState.opening_seen:
+		dialogue_panel.visible = true
+		dialogue_confirm_button.visible = false
+		select_hub_target("")
 		return
 	opening_active = true
 	opening_index = 0
 	dialogue_panel.visible = true
 	dialogue_speaker_label.text = "청람의 기록"
+	dialogue_confirm_button.visible = true
 	dialogue_confirm_button.text = "계속"
 	show_opening_line()
 
@@ -843,5 +863,7 @@ func advance_opening() -> void:
 func end_opening() -> void:
 	opening_active = false
 	GameState.opening_seen = true
-	dialogue_panel.visible = false
+	dialogue_confirm_button.visible = false
 	dialogue_confirm_button.text = "확인"
+	dialogue_panel.visible = true
+	select_hub_target("")
